@@ -73,7 +73,6 @@
     "ytdl-core": "^4.11.5",
     "@dark-yasiya/yt-dl.js": "^1.0.5",
     "he": "^1.2.0",
-    "@mrnima/facebook-downloader": "^1.0.0",
     "@bochilteam/scraper-mediafire": "^5.0.0",
     "cloudscraper": "^4.6.0",
     "@dark-yasiya/scrap": "^1.0.1",
