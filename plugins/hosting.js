@@ -1,7 +1,7 @@
 const hostingImages = [
-  "https://github.com/mmtbusinesshub/MMT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.22%20PM.jpeg?raw=true",
-  "https://github.com/mmtbusinesshub/MMT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.25%20PM.jpeg?raw=true",
-  "https://github.com/mmtbusinesshub/MMT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.26%20PM.jpeg?raw=true"
+  "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.22%20PM.jpeg?raw=true",
+  "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.25%20PM.jpeg?raw=true",
+  "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.26%20PM.jpeg?raw=true"
 ];
 
 module.exports = {
