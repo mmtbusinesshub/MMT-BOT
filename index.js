@@ -330,10 +330,6 @@ async function connectToWA() {
     const m = sms(conn, mek);
     const type = getContentType(mek.message);
     const from = mek.key.remoteJid;
-      if (from && from.endsWith('@g.us')) {
-    console.log('🚫 Ignoring group message:', from);
-    return;
-  }
     const body = type === 'conversation'
       ? mek.message.conversation
       : mek.message[type]?.text || mek.message[type]?.caption || '';
@@ -429,10 +425,6 @@ async function connectToWA() {
 
   conn.ev.on('messages.update', async (updates) => {
       const updRemote = (updates && updates[0] && updates[0].key && updates[0].key.remoteJid) || '';
-  if (updRemote && updRemote.endsWith('@g.us')) {
-    console.log('🚫 Ignoring messages.update for group:', updRemote);
-    return;
-  }
     if (global.pluginHooks) {
       for (const plugin of global.pluginHooks) {
         if (plugin.onDelete) {
