@@ -1,4 +1,4 @@
-const adminImage = "https://github.com/mmtbusinesshub/MMT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.32.57%20PM.jpeg?raw=true";
+const adminImage = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.32.57%20PM.jpeg?raw=true";
 const adminNumber = "94722136082"; 
 
 module.exports = {
