@@ -274,6 +274,17 @@ async function connectToWA() {
       }
     }
 
+    // Check if message is from group
+    const from = mek.key.remoteJid;
+    const isGroup = from && from.endsWith('@g.us');
+    
+    // Block all plugin functionality in groups
+    if (isGroup) {
+      console.log('🚫 Ignoring group message from:', from);
+      return; // Skip all plugin processing for groups
+    }
+
+    // Only process plugins for private messages
     if (global.pluginHooks) {
       for (const plugin of global.pluginHooks) {
         if (plugin.onMessage) {
@@ -329,7 +340,6 @@ async function connectToWA() {
 
     const m = sms(conn, mek);
     const type = getContentType(mek.message);
-    const from = mek.key.remoteJid;
     const body = type === 'conversation'
       ? mek.message.conversation
       : mek.message[type]?.text || mek.message[type]?.caption || '';
@@ -344,8 +354,6 @@ async function connectToWA() {
       : (mek.key.participant || mek.key.remoteJid);
 
     const senderNumber = sender.split('@')[0];
-    const isGroup = from.endsWith('@g.us');
-
     const botNumber = conn.user.id.split(':')[0];
     const pushname = mek.pushName || 'Sin Nombre';
     const isMe = botNumber.includes(senderNumber);
@@ -424,7 +432,17 @@ async function connectToWA() {
   });
 
   conn.ev.on('messages.update', async (updates) => {
-      const updRemote = (updates && updates[0] && updates[0].key && updates[0].key.remoteJid) || '';
+    // Check if update is from group
+    const updRemote = (updates && updates[0] && updates[0].key && updates[0].key.remoteJid) || '';
+    const isGroupUpdate = updRemote && updRemote.endsWith('@g.us');
+    
+    // Block all plugin delete functionality in groups
+    if (isGroupUpdate) {
+      console.log('🚫 Ignoring messages.update for group:', updRemote);
+      return;
+    }
+
+    // Only process delete events for private messages
     if (global.pluginHooks) {
       for (const plugin of global.pluginHooks) {
         if (plugin.onDelete) {
@@ -448,5 +466,3 @@ app.listen(port, () => console.log(`🌐 [MMT BUSINESS HUB] Web server running �
 setTimeout(() => {
   connectToWA();
 }, 4000);
-
-
