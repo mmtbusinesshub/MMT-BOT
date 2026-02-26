@@ -25,17 +25,12 @@ async function updateExchangeRates() {
 updateExchangeRates();
 setInterval(updateExchangeRates, 12 * 60 * 60 * 1000); 
 
-// Parse rate string that may contain commas (e.g., "15,101.05")
-function parseRateString(rateStr) {
-  if (!rateStr) return 0;
-  // Remove commas and convert to number
-  return parseFloat(rateStr.replace(/,/g, ''));
-}
-
-function convertFromLKR(rateInLKR) {
-  if (!rateInLKR || isNaN(rateInLKR)) return null;
+function convertFromLKR(rateStr) {
+  if (!rateStr) return null;
   
-  const lkrValue = parseRateString(rateInLKR.toString());
+  // Convert rate string to number (handles both "0.90" and "8" formats)
+  const lkrValue = parseFloat(rateStr);
+  if (isNaN(lkrValue)) return null;
   
   // Convert LKR to USD and INR (keep all decimal places)
   const usdValue = (lkrValue * lkrToUsd);
@@ -49,25 +44,25 @@ function convertFromLKR(rateInLKR) {
 }
 
 function formatPriceDisplay(service) {
-  const rate = service.rate; // API returns rate as string like "0.90" or "15,101.05"
+  const rate = service.rate; // API returns rate as string like "0.90" or "8"
   const converted = convertFromLKR(rate);
   
   if (!converted) return "Price not available";
   
-  // Format numbers with commas and keep all decimal places
+  // Format function to handle decimals properly
   const formatNumber = (num) => {
-    // Split into integer and decimal parts
-    const [intPart, decPart] = num.toString().split('.');
-    // Add commas to integer part
-    const formattedInt = parseInt(intPart).toLocaleString();
-    // Return with decimal part if exists
-    return decPart ? `${formattedInt}.${decPart}` : formattedInt;
+    // If it's a whole number, show as is (e.g., 8)
+    if (Number.isInteger(num)) {
+      return num.toString();
+    }
+    // For decimals, show all decimal places (e.g., 0.90)
+    return num.toString();
   };
   
-  return `┌─ 💰 *Price Details*\n` +
-         `│ 📍 LKR: Rs ${formatNumber(converted.lkr)} PER 1K\n` +
-         `│ 💵 USD: $${formatNumber(converted.usd)} PER 1K\n` +
-         `│ 💴 INR: ₹${formatNumber(converted.inr)} PER 1K\n` +
+  return `┌─ 💰 *Price Details (Per 1K)*\n` +
+         `│ 📍 LKR: Rs ${formatNumber(converted.lkr)}\n` +
+         `│ 💵 USD: $${formatNumber(converted.usd)}\n` +
+         `│ 💴 INR: ₹${formatNumber(converted.inr)}\n` +
          `│ 🆔 Service ID: ${service.service}\n` +
          `└────────────`;
 }
@@ -82,7 +77,7 @@ function normalize(text) {
 }
 
 function extractNumericPrice(service) {
-  return parseRateString(service.rate);
+  return parseFloat(service.rate) || 0;
 }
 
 function detectServiceType(query) {
@@ -259,7 +254,7 @@ module.exports = {
       messageText += `📞 *Support:* wa.me/94722136082\n`;
       messageText += `🌐 *Website:* https://makemetrend.online\n`;
       messageText += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      messageText += `_💡 Reply with .order <service_id> <quantity> to place an order_`;
+      messageText += `_💡 Reply with .order ${selectedServices[0]?.service} <quantity> to place an order_`;
 
       await conn.sendMessage(from, {
         image: { url: serviceLogo },
