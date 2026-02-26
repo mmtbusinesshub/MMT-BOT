@@ -1,37 +1,72 @@
 const axios = require("axios");
 
-let inrToLkr = 3.4; 
-async function updateExchangeRate() {
+let lkrToUsd = 0.0033; // 1 LKR = 0.0033 USD (default)
+let lkrToInr = 0.29;   // 1 LKR = 0.29 INR (default)
+
+async function updateExchangeRates() {
   try {
-    const { data } = await axios.get("https://api.exchangerate.host/latest?base=INR&symbols=LKR");
-    if (data?.rates?.LKR) {
-      inrToLkr = data.rates.LKR;
-      console.log(`💱 [MMT BUSINESS HUB] Updated INR→LKR rate: ${inrToLkr}`);
+    // Fetch LKR to USD rate
+    const usdResponse = await axios.get("https://api.exchangerate.host/latest?base=LKR&symbols=USD");
+    if (usdResponse.data?.rates?.USD) {
+      lkrToUsd = usdResponse.data.rates.USD;
+      console.log(`💱 [MMT BUSINESS HUB] Updated LKR→USD rate: ${lkrToUsd}`);
+    }
+    
+    // Fetch LKR to INR rate
+    const inrResponse = await axios.get("https://api.exchangerate.host/latest?base=LKR&symbols=INR");
+    if (inrResponse.data?.rates?.INR) {
+      lkrToInr = inrResponse.data.rates.INR;
+      console.log(`💱 [MMT BUSINESS HUB] Updated LKR→INR rate: ${lkrToInr}`);
     }
   } catch (err) {
-    console.error("⚠️ [MMT BUSINESS HUB] Failed to fetch INR→LKR rate:", err.message);
+    console.error("⚠️ [MMT BUSINESS HUB] Failed to fetch exchange rates:", err.message);
   }
 }
-updateExchangeRate();
-setInterval(updateExchangeRate, 12 * 60 * 60 * 1000); 
+updateExchangeRates();
+setInterval(updateExchangeRates, 12 * 60 * 60 * 1000); 
 
-function convertToLKR(priceStr) {
-  if (!priceStr) return "Price not available";
+function extractLKRPrice(priceStr) {
+  if (!priceStr) return 0;
   
-  // Extract INR price (handle different formats)
-  const inrMatch = priceStr.match(/₹?\s*([\d,.]+)/);
-  if (!inrMatch) return priceStr; // Return original if no INR found
+  // Extract numeric value from price string (API returns LKR)
+  const match = priceStr.match(/(?:Rs\.?|LKR)?\s*([\d,.]+)/i);
+  if (match) {
+    return parseFloat(match[1].replace(/,/g, ''));
+  }
   
-  const inrValue = parseFloat(inrMatch[1].replace(/,/g, ''));
-  if (isNaN(inrValue)) return priceStr;
+  return 0;
+}
+
+function convertFromLKR(priceInLKR) {
+  if (!priceInLKR || isNaN(priceInLKR)) return null;
   
-  // Extract per unit info (per 1000, per 1k, etc)
-  const perMatch = priceStr.match(/per\s*([\d,.]+k?)/i);
+  // Convert LKR to USD and INR
+  const usdValue = (priceInLKR * lkrToUsd).toFixed(2);
+  const inrValue = (priceInLKR * lkrToInr).toFixed(2);
+  
+  return {
+    lkr: Math.round(priceInLKR),
+    usd: usdValue,
+    inr: inrValue
+  };
+}
+
+function formatPriceDisplay(service) {
+  const lkrPrice = extractLKRPrice(service.price);
+  const converted = convertFromLKR(lkrPrice);
+  
+  if (!converted) return "Price not available";
+  
+  // Extract per unit info
+  const perMatch = service.price.match(/per\s*([\d,.]+k?)/i);
   const perText = perMatch ? ` per ${perMatch[1]}` : "";
   
-  const lkrValue = Math.round(inrValue * inrToLkr);
-  
-  return `Rs. ${lkrValue.toLocaleString()} LKR${perText}`;
+  return `┌─ 💰 *Price Details*\n` +
+         `│ 📍 LKR: Rs. ${converted.lkr.toLocaleString()}${perText}\n` +
+         `│ 💵 USD: $${converted.usd}${perText}\n` +
+         `│ 💴 INR: ₹${converted.inr}${perText}\n` +
+         `│ 🆔 Service ID: ${service.service_id}\n` +
+         `└────────────`;
 }
 
 function numberToEmoji(num) {
@@ -43,15 +78,13 @@ function normalize(text) {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
 }
 
-function extractNumericPrice(priceStr) {
-  const match = priceStr.match(/₹?\s*([\d,.]+)/);
-  return match ? parseFloat(match[1].replace(/,/g, "")) : 0;
+function extractNumericPrice(service) {
+  return extractLKRPrice(service.price);
 }
 
 function detectServiceType(query) {
   const normalized = normalize(query);
   
-  // Service type mapping
   const types = {
     'followers': ['follower', 'followers', 'foll', 'subscriber', 'subscribers'],
     'likes': ['like', 'likes', 'lik'],
@@ -66,13 +99,12 @@ function detectServiceType(query) {
     }
   }
   
-  return 'followers'; // Default to followers if no specific type detected
+  return 'followers';
 }
 
 function detectPlatform(query) {
   const normalized = normalize(query);
   
-  // Platform mapping
   const platforms = {
     'instagram': ['instagram', 'ig', 'insta'],
     'facebook': ['facebook', 'fb', 'meta'],
@@ -94,19 +126,17 @@ function detectPlatform(query) {
 function filterServicesByType(services, platform, serviceType) {
   if (!services || !services.length) return [];
   
-  const normalizedPlatform = normalize(platform || '');
-  const normalizedType = normalize(serviceType || '');
+  const normalizedPlatform = platform ? normalize(platform) : '';
+  const normalizedType = serviceType ? normalize(serviceType) : '';
   
   return services.filter(service => {
     const name = normalize(service.name);
     const category = normalize(service.category);
     
-    // Check if service matches platform
     const matchesPlatform = !platform || 
       name.includes(normalizedPlatform) || 
       category.includes(normalizedPlatform);
     
-    // Check if service matches type
     const matchesType = !serviceType || 
       name.includes(normalizedType) || 
       category.includes(normalizedType);
@@ -115,11 +145,13 @@ function filterServicesByType(services, platform, serviceType) {
   });
 }
 
-function getPriceSortedServices(services) {
-  // Sort services by price
+function getTopServices(services) {
+  if (!services || services.length === 0) return [];
+  
+  // Sort by price (LKR)
   const sorted = [...services].sort((a, b) => {
-    const priceA = extractNumericPrice(a.price);
-    const priceB = extractNumericPrice(b.price);
+    const priceA = extractNumericPrice(a);
+    const priceB = extractNumericPrice(b);
     return priceA - priceB;
   });
   
@@ -138,10 +170,10 @@ function getPriceSortedServices(services) {
 
 function createServiceItem(service, index) {
   const emoji = numberToEmoji(index + 1);
-  const lkrPrice = convertToLKR(service.price);
+  const priceDisplay = formatPriceDisplay(service);
   
   return `${emoji} *${service.name}*\n` +
-         `💰 Price: ${lkrPrice}\n` +
+         `${priceDisplay}\n` +
          `📦 Min: ${service.min} | Max: ${service.max}\n` +
          `🔗 https://makemetrend.online/services\n` +
          `────────────────────`;
@@ -169,7 +201,6 @@ module.exports = {
       const msg = text.toLowerCase();
       const from = key.remoteJid;
 
-      // Keywords to trigger service response
       const serviceKeywords = [
         "price", "service", "cost", "purchase", "order", "rate", "charges",
         "facebook", "fb", "instagram", "ig", "youtube", "tiktok", "telegram",
@@ -179,15 +210,12 @@ module.exports = {
       const isServiceQuery = serviceKeywords.some(k => msg.includes(k));
       if (!isServiceQuery) return;
 
-      // Send typing indicator
       await conn.sendPresenceUpdate('composing', from);
       
-      // React to message
       try { 
         await conn.sendMessage(from, { react: { text: "🔍", key: mek.key } }); 
       } catch{}
 
-      // Get services
       let services;
       try { 
         services = await global.mmtServices.getServices(); 
@@ -196,31 +224,25 @@ module.exports = {
         return; 
       }
 
-      // Detect what user wants
       const platform = detectPlatform(text);
       const serviceType = detectServiceType(text);
       
       console.log(`[MMT BUSINESS HUB] Detected: Platform=${platform}, Type=${serviceType}`);
 
-      // Filter services
       let filtered = filterServicesByType(services, platform, serviceType);
       
-      // If no matches with specific platform, try without platform
       if (filtered.length === 0 && platform) {
         filtered = filterServicesByType(services, null, serviceType);
       }
       
-      // If still no matches, show popular services of detected type
       if (filtered.length === 0) {
         filtered = filterServicesByType(services, null, serviceType);
       }
 
       if (filtered.length === 0) return;
 
-      // Get 3 lowest and 2 highest price services
-      const selectedServices = getPriceSortedServices(filtered);
+      const selectedServices = getTopServices(filtered);
 
-      // Build response message
       let messageText = "╭━━━〔 🎯 *MATCHING SERVICES* 〕━━━╮\n\n";
       
       if (platform) {
@@ -231,7 +253,6 @@ module.exports = {
       }
       messageText += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-      // Add services
       selectedServices.forEach((service, index) => {
         messageText += createServiceItem(service, index) + "\n\n";
       });
@@ -240,9 +261,8 @@ module.exports = {
       messageText += `📞 *Support:* wa.me/94722136082\n`;
       messageText += `🌐 *Website:* https://makemetrend.online\n`;
       messageText += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      messageText += `_💡 Reply with .order to place an order_`;
+      messageText += `_💡 Reply with .order <service_id> <quantity> to place an order_`;
 
-      // Send response with image
       await conn.sendMessage(from, {
         image: { url: serviceLogo },
         caption: messageText,
