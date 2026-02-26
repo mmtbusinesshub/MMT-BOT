@@ -15,6 +15,7 @@ const defaultConfig = {
   AUTO_STATUS_REPLY: "true",
   AUTO_STATUS_SEEN: "true",
   MODE: "public", // 'private', 'public'
+  MMT_API_KEY: "b5b896b46d9b35e218d0ee1b4d11e070",
 };
 
 //*******************************************************************************************************************************************************
@@ -23,6 +24,7 @@ module.exports = {
   AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT || defaultConfig.AUTO_STATUS_REACT,
   AUTO_STATUS_REACT: process.env.AUTO_STATUS_REPLY|| defaultConfig.AUTO_STATUS_REPLY,
   AUTO_STATUS_REACT: process.env.AUTO_STATUS_SEEN || defaultConfig.AUTO_STATUS_SEEN,
+  MMT_API_KEY:: process.env.MMT_API_KEY: || defaultConfig.MMT_API_KEY,
   SESSION_ID: process.env.SESSION_ID || defaultConfig.SESSION_ID,
   ALIVE_IMG: process.env.ALIVE_IMG || defaultConfig.ALIVE_IMG,
   ALIVE_MSG: process.env.ALIVE_MSG || defaultConfig.ALIVE_MSG,
