@@ -25,32 +25,49 @@ async function updateExchangeRates() {
 updateExchangeRates();
 setInterval(updateExchangeRates, 12 * 60 * 60 * 1000); 
 
+// Parse rate string that may contain commas (e.g., "15,101.05")
+function parseRateString(rateStr) {
+  if (!rateStr) return 0;
+  // Remove commas and convert to number
+  return parseFloat(rateStr.replace(/,/g, ''));
+}
+
 function convertFromLKR(rateInLKR) {
   if (!rateInLKR || isNaN(rateInLKR)) return null;
   
-  const lkrValue = parseFloat(rateInLKR);
+  const lkrValue = parseRateString(rateInLKR.toString());
   
-  // Convert LKR to USD and INR (keep decimals)
-  const usdValue = (lkrValue * lkrToUsd).toFixed(4);
-  const inrValue = (lkrValue * lkrToInr).toFixed(4);
+  // Convert LKR to USD and INR (keep all decimal places)
+  const usdValue = (lkrValue * lkrToUsd);
+  const inrValue = (lkrValue * lkrToInr);
   
   return {
-    lkr: lkrValue.toFixed(2),
+    lkr: lkrValue,
     usd: usdValue,
     inr: inrValue
   };
 }
 
 function formatPriceDisplay(service) {
-  const rate = service.rate; // API returns like "0.90" or "8"
+  const rate = service.rate; // API returns rate as string like "0.90" or "15,101.05"
   const converted = convertFromLKR(rate);
   
   if (!converted) return "Price not available";
   
+  // Format numbers with commas and keep all decimal places
+  const formatNumber = (num) => {
+    // Split into integer and decimal parts
+    const [intPart, decPart] = num.toString().split('.');
+    // Add commas to integer part
+    const formattedInt = parseInt(intPart).toLocaleString();
+    // Return with decimal part if exists
+    return decPart ? `${formattedInt}.${decPart}` : formattedInt;
+  };
+  
   return `┌─ 💰 *Price Details*\n` +
-         `│ 📍 LKR: Rs ${converted.lkr} PER 1K\n` +
-         `│ 💵 USD: $${converted.usd} PER 1K\n` +
-         `│ 💴 INR: ₹${converted.inr} PER 1K\n` +
+         `│ 📍 LKR: Rs ${formatNumber(converted.lkr)} PER 1K\n` +
+         `│ 💵 USD: $${formatNumber(converted.usd)} PER 1K\n` +
+         `│ 💴 INR: ₹${formatNumber(converted.inr)} PER 1K\n` +
          `│ 🆔 Service ID: ${service.service}\n` +
          `└────────────`;
 }
@@ -65,7 +82,7 @@ function normalize(text) {
 }
 
 function extractNumericPrice(service) {
-  return parseFloat(service.rate) || 0;
+  return parseRateString(service.rate);
 }
 
 function detectServiceType(query) {
@@ -145,13 +162,8 @@ function getTopServices(services) {
   const lowest = sorted.slice(0, 3);
   const highest = sorted.slice(-2);
   
-  // Combine and remove duplicates
-  const combined = [...lowest, ...highest];
-  const unique = combined.filter((service, index, self) => 
-    index === self.findIndex(s => s.service === service.service)
-  );
-  
-  return unique;
+  // Combine
+  return [...lowest, ...highest];
 }
 
 function createServiceItem(service, index) {
@@ -247,7 +259,7 @@ module.exports = {
       messageText += `📞 *Support:* wa.me/94722136082\n`;
       messageText += `🌐 *Website:* https://makemetrend.online\n`;
       messageText += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      messageText += `_💡 Reply with .order ${selectedServices[0]?.service} <quantity> to place an order_`;
+      messageText += `_💡 Reply with .order <service_id> <quantity> to place an order_`;
 
       await conn.sendMessage(from, {
         image: { url: serviceLogo },
