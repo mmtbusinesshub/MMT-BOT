@@ -1,11 +1,10 @@
 const axios = require("axios");
 
-let lkrToUsd = 0.0033; // 1 LKR = 0.0033 USD (default)
-let lkrToInr = 0.29;   // 1 LKR = 0.29 INR (default)
+let lkrToUsd = 0.0033;
+let lkrToInr = 0.29;  
 
 async function updateExchangeRates() {
   try {
-    // Fetch LKR to USD rate
     const usdResponse = await axios.get("https://api.exchangerate.host/latest?base=LKR&symbols=USD");
     if (usdResponse.data?.rates?.USD) {
       lkrToUsd = usdResponse.data.rates.USD;
@@ -28,11 +27,8 @@ setInterval(updateExchangeRates, 12 * 60 * 60 * 1000);
 function extractLKRPrice(priceStr) {
   if (!priceStr) return 0;
   
-  // Extract numeric value from price string (API returns LKR)
-  // Handle both comma and dot decimal formats
   const match = priceStr.match(/(?:Rs\.?|LKR)?\s*([\d,.]+)/i);
   if (match) {
-    // Remove commas and parse as float to keep decimals
     const cleaned = match[1].replace(/,/g, '');
     return parseFloat(cleaned);
   }
@@ -43,12 +39,11 @@ function extractLKRPrice(priceStr) {
 function convertFromLKR(priceInLKR) {
   if (!priceInLKR || isNaN(priceInLKR)) return null;
   
-  // Convert LKR to USD and INR with full precision
   const usdValue = priceInLKR * lkrToUsd;
   const inrValue = priceInLKR * lkrToInr;
   
   return {
-    lkr: priceInLKR, // Keep as original decimal number
+    lkr: priceInLKR, 
     usd: usdValue,
     inr: inrValue
   };
@@ -57,22 +52,17 @@ function convertFromLKR(priceInLKR) {
 function formatWithTwoDecimals(num) {
   if (num === null || isNaN(num)) return "0.00";
   
-  // Convert to string and handle scientific notation
   const numStr = num.toString();
   
-  // Check if it has decimal point
   if (numStr.includes('.')) {
     const [intPart, decPart] = numStr.split('.');
-    // Take first 2 decimals without rounding
     const twoDecimals = decPart.substring(0, 2).padEnd(2, '0');
     
-    // Add commas to integer part if it's large enough
     const intNum = parseInt(intPart);
     const formattedInt = intNum >= 1000 ? intNum.toLocaleString() : intPart;
     
     return `${formattedInt}.${twoDecimals}`;
   } else {
-    // No decimals, add .00
     const intNum = parseInt(numStr);
     const formattedInt = intNum >= 1000 ? intNum.toLocaleString() : numStr;
     return `${formattedInt}.00`;
@@ -82,25 +72,19 @@ function formatWithTwoDecimals(num) {
 function formatLKRPrice(price) {
   if (price === null || isNaN(price)) return "0";
   
-  // Check if it has decimal part
   const numStr = price.toString();
   
   if (numStr.includes('.')) {
     const [intPart, decPart] = numStr.split('.');
-    // Take ALL decimal digits (no rounding)
-    const allDecimals = decPart; // Keep all decimal places
-    
-    // Add commas to integer part if it's large enough
+    const allDecimals = decPart;
     const intNum = parseInt(intPart);
     const formattedInt = intNum >= 1000 ? intNum.toLocaleString() : intPart;
     
-    // Only show decimals if they exist and are not all zeros
     if (parseFloat(`0.${allDecimals}`) > 0) {
       return `${formattedInt}.${allDecimals}`;
     }
     return formattedInt;
   } else {
-    // No decimals
     const intNum = parseInt(numStr);
     return intNum >= 1000 ? intNum.toLocaleString() : numStr;
   }
@@ -112,17 +96,14 @@ function formatPriceDisplay(service) {
   
   if (!converted) return "Price not available";
   
-  // Extract per unit info
   const perMatch = service.price.match(/per\s*([\d,.]+k?)/i);
   const perText = perMatch ? ` per ${perMatch[1]}` : "";
   
-  // Format LKR - keep ALL decimal places, no rounding
   const lkrFormatted = formatLKRPrice(converted.lkr);
   
   return `┌─ 💰 *Price Details*\n` +
          `│ 📍 LKR: Rs. ${lkrFormatted}${perText}\n` +
          `│ 💵 USD: $${formatWithTwoDecimals(converted.usd)}${perText}\n` +
-         `│ 💴 INR: ₹${formatWithTwoDecimals(converted.inr)}${perText}\n` +
          `│ 🆔 Service ID: ${service.service_id}\n` +
          `└────────────`;
 }
@@ -206,18 +187,15 @@ function filterServicesByType(services, platform, serviceType) {
 function getTopServices(services) {
   if (!services || services.length === 0) return [];
   
-  // Sort by price (LKR) - using exact decimal values
   const sorted = [...services].sort((a, b) => {
     const priceA = extractNumericPrice(a);
     const priceB = extractNumericPrice(b);
     return priceA - priceB;
   });
   
-  // Get 3 lowest and 2 highest
   const lowest = sorted.slice(0, 3);
   const highest = sorted.slice(-2);
   
-  // Combine and remove duplicates
   const combined = [...lowest, ...highest];
   const unique = combined.filter((service, index, self) => 
     index === self.findIndex(s => s.service_id === service.service_id)
@@ -301,7 +279,7 @@ module.exports = {
 
       const selectedServices = getTopServices(filtered);
 
-      let messageText = "╭━━━〔 🎯 *MATCHING SERVICES* 〕━━━╮\n\n";
+      let messageText = "╭━━━〔 🎯 *MATCHING SERVICES* 〕\n\n";
       
       if (platform) {
         messageText += `📱 *Platform:* ${platform.toUpperCase()}\n`;
@@ -315,11 +293,9 @@ module.exports = {
         messageText += createServiceItem(service, index) + "\n\n";
       });
 
-      messageText += `━━━━━━━━━━━━━━━━━━━━\n`;
       messageText += `📞 *Support:* wa.me/94722136082\n`;
       messageText += `🌐 *Website:* https://makemetrend.online\n`;
-      messageText += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      messageText += `_💡 Reply with .order <service_id> <quantity> to place an order_`;
+      messageText += `╰━━━━━━━━━━━━━━━━━━━━╯`;
 
       await conn.sendMessage(from, {
         image: { url: serviceLogo },
