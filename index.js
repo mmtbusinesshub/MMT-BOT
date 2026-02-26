@@ -370,12 +370,25 @@ async function connectToWA() {
 
     const currentMode = (config.MODE || 'public').toLowerCase();
 
-// PRIVATE MODE CHECK - Block ALL non-owner messages (commands AND plugins)
-if (currentMode === 'private' && !isOwner) {
-  console.log(`🔒 [MMT BUSINESS HUB] Private mode: Ignoring message from non-owner ${senderNumber} in ${isGroup ? 'group' : 'private'}`);
-  return; // Exit early - no plugins or commands will process
+if (currentMode === 'private') {
+  // PRIVATE MODE: Only owner can use bot (both inbox and groups)
+  if (!isOwner) {
+    console.log(`🔒 [PRIVATE MODE] Ignoring message from non-owner ${senderNumber} in ${isGroup ? 'group' : 'inbox'}`);
+    return; // Block all non-owner messages
+  }
+} 
+else if (currentMode === 'inbox') {
+  // INBOX MODE: All users can use in inbox, but block ALL group messages
+  if (isGroup) {
+    console.log(`📱 [INBOX MODE] Ignoring group message from ${senderNumber} in ${from}`);
+    return; // Block all group messages
+  }
+  // Inbox messages from all users are allowed (no need to check isOwner)
 }
-    if (global.pluginHooks) {
+// PUBLIC MODE: Everything allowed (no checks needed)
+
+// Process plugins for messages
+if (global.pluginHooks) {
   for (const plugin of global.pluginHooks) {
     if (plugin.onMessage) {
       try {
