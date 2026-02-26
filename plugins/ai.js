@@ -399,37 +399,51 @@ function detectSMMService(query) {
     return detected;
 }
 
+
 /**
- * Filter services based on platform and service type - IMPROVED
+ * STRICT SERVICE CLASSIFIER (Prevents Mixed Results)
+ */
+function classifyService(service) {
+    const name = normalize(service.name || "");
+    
+    const patterns = {
+        followers: /\bfollowers?\b/,
+        subscribers: /\bsubscribers?\b|\bsubs\b/,
+        likes: /\blikes?\b/,
+        views: /\bviews?\b/,
+        comments: /\bcomments?\b/,
+        shares: /\bshares?\b|\breposts?\b/,
+        saves: /\bsaves?\b|\bbookmark\b/,
+        story: /\bstory\b/,
+        live: /\blive\b|\bstream\b/,
+        reactions: /\breactions?\b|\bemoji\b/,
+        channel: /\bchannel\b/,
+        watchtime: /\bwatch\s?time\b|\bhours\b/,
+        group: /\bgroup\b/,
+        poll: /\bpoll\b|\bvote\b/
+    };
+
+    let matched = [];
+
+    for (const [type, regex] of Object.entries(patterns)) {
+        if (regex.test(name)) {
+            matched.push(type);
+        }
+    }
+
+    return matched;
+}
+
+
+/**
+ * SMART STRICT FILTERING SYSTEM
  */
 function filterServices(services, platform, serviceType) {
     if (!services || !services.length) return [];
-    
+
     const platformLower = platform ? platform.toLowerCase() : '';
     const serviceLower = serviceType ? serviceType.toLowerCase() : '';
-    
-    // Service type to keyword mapping
-    const serviceToKeywords = {
-        'followers': ['follower', 'followers', 'fans'],
-        'subscribers': ['subscriber', 'subscribers', 'subs'],
-        'likes': ['like', 'likes', 'heart', 'hearts'],
-        'views': ['view', 'views', 'plays'],
-        'comments': ['comment', 'comments'],
-        'shares': ['share', 'shares', 'repost'],
-        'saves': ['save', 'saves', 'bookmark'],
-        'story': ['story', 'stories'],
-        'live': ['live', 'stream'],
-        'channel': ['channel'],
-        'reactions': ['reaction', 'reactions', 'emoji'],
-        'watchtime': ['watch', 'hours', 'watchtime'],
-        'group': ['group'],
-        'poll': ['poll', 'vote']
-    };
-    
-    // Get keywords for the service type
-    const serviceKeywords = serviceToKeywords[serviceLower] || [serviceLower];
-    
-    // Platform variations
+
     const platformVariations = {
         'tiktok': ['tiktok', 'tt'],
         'instagram': ['instagram', 'ig', 'insta'],
@@ -437,44 +451,58 @@ function filterServices(services, platform, serviceType) {
         'youtube': ['youtube', 'yt'],
         'whatsapp': ['whatsapp', 'wa']
     };
-    
+
     const platformKeywords = platformVariations[platformLower] || [platformLower];
-    
+
     return services.filter(service => {
-        const nameLower = service.name.toLowerCase();
-        const categoryLower = (service.category || '').toLowerCase();
-        
-        // Check platform match
+        const nameLower = normalize(service.name || "");
+        const categoryLower = normalize(service.category || "");
+
+        /* ---------------- PLATFORM MATCH ---------------- */
         let platformMatch = true;
+
         if (platformLower) {
-            platformMatch = platformKeywords.some(keyword => 
+            platformMatch = platformKeywords.some(keyword =>
                 nameLower.includes(keyword) || categoryLower.includes(keyword)
             );
         }
-        
-        // Check service type match
-        let serviceMatch = true;
-        if (serviceLower) {
-            serviceMatch = serviceKeywords.some(keyword => 
-                nameLower.includes(keyword) || categoryLower.includes(keyword)
-            );
-            
-            // Special case for YouTube subscribers
-            if (platformLower === 'youtube' && serviceLower === 'subscribers') {
-                serviceMatch = serviceMatch || 
-                    nameLower.includes('subscriber') || 
-                    nameLower.includes('subs');
-            }
-            
-            // Special case for TikTok/Instagram likes
-            if (serviceLower === 'likes') {
-                serviceMatch = serviceMatch || 
-                    nameLower.includes('like') || 
-                    nameLower.includes('heart');
-            }
+
+        if (!platformMatch) return false;
+
+        /* ---------------- SERVICE MATCH ---------------- */
+        if (!serviceLower) return platformMatch;
+
+        const classifiedTypes = classifyService(service);
+
+        // STRICT RULE 1: Must contain requested type
+        if (!classifiedTypes.includes(serviceLower)) {
+            return false;
         }
-        
-        return platformMatch && serviceMatch;
+
+        // STRICT RULE 2: Reject bundles (likes + followers etc.)
+        if (classifiedTypes.length > 1) {
+            return false;
+        }
+
+        /* ---------------- SPECIAL INTELLIGENT RULES ---------------- */
+
+        // Prevent "comment likes" when user wants "likes"
+        if (serviceLower === "likes") {
+            if (nameLower.includes("comment")) return false;
+            if (nameLower.includes("story") && !nameLower.includes("story likes")) return false;
+        }
+
+        // Prevent story views when user wants normal views
+        if (serviceLower === "views") {
+            if (nameLower.includes("story")) return false;
+        }
+
+        // YouTube followers → subscribers auto handling
+        if (platformLower === "youtube" && serviceLower === "followers") {
+            return false;
+        }
+
+        return true;
     });
 }
 
