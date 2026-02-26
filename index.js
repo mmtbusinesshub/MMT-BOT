@@ -169,12 +169,6 @@ if (!fs.existsSync(__dirname + '/auth_info_baileys/creds.json')) {
 }
 
 const { replyHandlers, commands } = require('./command');
-const autoGreetingsPlugin = require('./plugins/ai.js');
-global.pluginHooks.push(autoGreetingsPlugin);
-const hostingPlugin = require('./plugins/hosting.js');
-global.pluginHooks.push(hostingPlugin);
-const adminDetails = require('./plugins/admin_details.js');
-global.pluginHooks.push(adminDetails);
 
 
 async function connectToWA() {
