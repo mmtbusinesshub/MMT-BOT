@@ -32,7 +32,7 @@ function extractLKRPrice(priceStr) {
   // Handle both comma and dot decimal formats
   const match = priceStr.match(/(?:Rs\.?|LKR)?\s*([\d,.]+)/i);
   if (match) {
-    // Remove commas and parse
+    // Remove commas and parse as float to keep decimals
     const cleaned = match[1].replace(/,/g, '');
     return parseFloat(cleaned);
   }
@@ -43,15 +43,67 @@ function extractLKRPrice(priceStr) {
 function convertFromLKR(priceInLKR) {
   if (!priceInLKR || isNaN(priceInLKR)) return null;
   
-  // Convert LKR to USD and INR with full precision first
+  // Convert LKR to USD and INR with full precision
   const usdValue = priceInLKR * lkrToUsd;
   const inrValue = priceInLKR * lkrToInr;
   
   return {
-    lkr: priceInLKR, // Keep as original number
+    lkr: priceInLKR, // Keep as original decimal number
     usd: usdValue,
     inr: inrValue
   };
+}
+
+function formatWithTwoDecimals(num) {
+  if (num === null || isNaN(num)) return "0.00";
+  
+  // Convert to string and handle scientific notation
+  const numStr = num.toString();
+  
+  // Check if it has decimal point
+  if (numStr.includes('.')) {
+    const [intPart, decPart] = numStr.split('.');
+    // Take first 2 decimals without rounding
+    const twoDecimals = decPart.substring(0, 2).padEnd(2, '0');
+    
+    // Add commas to integer part if it's large enough
+    const intNum = parseInt(intPart);
+    const formattedInt = intNum >= 1000 ? intNum.toLocaleString() : intPart;
+    
+    return `${formattedInt}.${twoDecimals}`;
+  } else {
+    // No decimals, add .00
+    const intNum = parseInt(numStr);
+    const formattedInt = intNum >= 1000 ? intNum.toLocaleString() : numStr;
+    return `${formattedInt}.00`;
+  }
+}
+
+function formatLKRPrice(price) {
+  if (price === null || isNaN(price)) return "0";
+  
+  // Check if it has decimal part
+  const numStr = price.toString();
+  
+  if (numStr.includes('.')) {
+    const [intPart, decPart] = numStr.split('.');
+    // Take ALL decimal digits (no rounding)
+    const allDecimals = decPart; // Keep all decimal places
+    
+    // Add commas to integer part if it's large enough
+    const intNum = parseInt(intPart);
+    const formattedInt = intNum >= 1000 ? intNum.toLocaleString() : intPart;
+    
+    // Only show decimals if they exist and are not all zeros
+    if (parseFloat(`0.${allDecimals}`) > 0) {
+      return `${formattedInt}.${allDecimals}`;
+    }
+    return formattedInt;
+  } else {
+    // No decimals
+    const intNum = parseInt(numStr);
+    return intNum >= 1000 ? intNum.toLocaleString() : numStr;
+  }
 }
 
 function formatPriceDisplay(service) {
@@ -64,29 +116,8 @@ function formatPriceDisplay(service) {
   const perMatch = service.price.match(/per\s*([\d,.]+k?)/i);
   const perText = perMatch ? ` per ${perMatch[1]}` : "";
   
-  // Format numbers with 2 decimal places without rounding
-  // Using Math.floor to ensure no rounding, just truncation
-  const formatWithTwoDecimals = (num) => {
-    // Handle if it's already a whole number
-    if (Number.isInteger(num)) return num.toString();
-    
-    // Split into integer and decimal parts
-    const [intPart, decPart = ''] = num.toString().split('.');
-    
-    // Get first two decimals without rounding
-    const twoDecimals = decPart.substring(0, 2).padEnd(2, '0');
-    
-    // Add commas to integer part
-    const formattedInt = parseInt(intPart).toLocaleString();
-    
-    return twoDecimals ? `${formattedInt}.${twoDecimals}` : formattedInt;
-  };
-  
-  // Format LKR with commas
-  const lkrFormatted = converted.lkr.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
+  // Format LKR - keep ALL decimal places, no rounding
+  const lkrFormatted = formatLKRPrice(converted.lkr);
   
   return `┌─ 💰 *Price Details*\n` +
          `│ 📍 LKR: Rs. ${lkrFormatted}${perText}\n` +
@@ -175,7 +206,7 @@ function filterServicesByType(services, platform, serviceType) {
 function getTopServices(services) {
   if (!services || services.length === 0) return [];
   
-  // Sort by price (LKR)
+  // Sort by price (LKR) - using exact decimal values
   const sorted = [...services].sort((a, b) => {
     const priceA = extractNumericPrice(a);
     const priceB = extractNumericPrice(b);
