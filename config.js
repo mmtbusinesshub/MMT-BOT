@@ -24,7 +24,7 @@ module.exports = {
   AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT || defaultConfig.AUTO_STATUS_REACT,
   AUTO_STATUS_REACT: process.env.AUTO_STATUS_REPLY|| defaultConfig.AUTO_STATUS_REPLY,
   AUTO_STATUS_REACT: process.env.AUTO_STATUS_SEEN || defaultConfig.AUTO_STATUS_SEEN,
-  MMT_API_KEY:: process.env.MMT_API_KEY: || defaultConfig.MMT_API_KEY,
+  MMT_API_KEY: process.env.MMT_API_KEY: || defaultConfig.MMT_API_KEY,
   SESSION_ID: process.env.SESSION_ID || defaultConfig.SESSION_ID,
   ALIVE_IMG: process.env.ALIVE_IMG || defaultConfig.ALIVE_IMG,
   ALIVE_MSG: process.env.ALIVE_MSG || defaultConfig.ALIVE_MSG,
