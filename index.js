@@ -33,88 +33,79 @@ const { sms } = require('./lib/msg');
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson } = require('./lib/functions');
 const { File } = require('megajs');
 const express = require("express");
-const cheerio = require("cheerio");
 
 const app = express();
 const port = process.env.PORT || 8000;
 
 const prefix = '.';
 
+// API Configuration
+const API_KEY = config.MMT_API_KEY || 'b5b896b46d9b35e218d0ee1b4d11e070';
+const API_URL = 'https://makemetrend.online/api/v2';
+
 let serviceCache = {
   data: null,
   lastFetch: 0,
   lastReset: Date.now()
 };
-const CACHE_DURATION = 24 * 60 * 60 * 1000; 
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
-async function fetchServicesPage() {
+async function fetchServicesFromAPI() {
   const maxRetries = 10;
   const retryDelay = 5000;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`🌐 [MMT BUSINESS HUB] Fetching services (Attempt ${attempt}/${maxRetries})...`);
+      console.log(`🌐 [MMT BUSINESS HUB] Fetching services from API (Attempt ${attempt}/${maxRetries})...`);
 
-      const response = await axios.get("https://makemetrend.online/services", {
+      const response = await axios.post(API_URL, {
+        key: API_KEY,
+        action: 'services'
+      }, {
         timeout: 30000,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
       });
 
-      if (response.status === 200) {
-        const $ = cheerio.load(response.data);
-        const services = [];
-        let currentCategory = null;
-
-        $("tr").each((_, el) => {
-          const row = $(el);
-
-          if (row.hasClass("services-list-category-title")) {
-            currentCategory = row.find("strong").text().trim();
-            return;
-          }
-
-          if (!currentCategory) return;
-
-          const name = row.find('td[data-label="Service"]').text().trim();
-
-          const price = row.find("td span.badge").eq(0).text().trim();
-
-          const minmax = row.find('td[data-th="Min"] span.badge').text().trim();
-          let [min, max] = minmax ? minmax.split("/").map(v => v.trim()) : ["", ""];
-
-          const link = "https://makemetrend.online/services";
-
-          if (name && price) {
-            services.push({
-              category: currentCategory,
-              name,
-              price,
-              min,
-              max,
-              link
-            });
-          }
-        });
+      if (response.status === 200 && Array.isArray(response.data)) {
+        // Transform API response to match the existing format
+        const services = response.data.map(service => ({
+          category: service.category || 'Uncategorized',
+          name: service.name,
+          price: service.rate,
+          min: service.min,
+          max: service.max,
+          service_id: service.service,
+          type: service.type,
+          link: 'https://makemetrend.online/services'
+        }));
 
         if (services.length > 0) {
           serviceCache.data = services;
           serviceCache.lastFetch = Date.now();
-          console.log(`✅ [MMT BUSINESS HUB] Successfully cached ${services.length} services`);
+          console.log(`✅ [MMT BUSINESS HUB] Successfully cached ${services.length} services from API`);
           return services;
         } else {
-          throw new Error("No services found on the page");
+          throw new Error("No services returned from API");
         }
-
       } else {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`Invalid API response: ${JSON.stringify(response.data)}`);
       }
+
     } catch (error) {
-      console.error(`❌ [MMT BUSINESS HUB] Attempt ${attempt}/${maxRetries} failed:`, error.message);
+      console.error(`❌ [MMT BUSINESS HUB] API Attempt ${attempt}/${maxRetries} failed:`, error.message);
+      
+      if (error.response) {
+        console.error('API Error Details:', {
+          status: error.response.status,
+          data: error.response.data
+        });
+      }
 
       if (attempt === maxRetries) {
-        throw new Error(`All ${maxRetries} attempts failed. Cannot start bot without services data.`);
+        throw new Error(`All ${maxRetries} API attempts failed. Cannot start bot without services data.`);
       }
 
       if (attempt < maxRetries) {
@@ -122,8 +113,8 @@ async function fetchServicesPage() {
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }
-  } 
-} 
+  }
+}
 
 function resetServiceCache() {
   serviceCache.data = null;
@@ -135,22 +126,50 @@ function resetServiceCache() {
 async function getServices() {
   const now = Date.now();
 
+  // Check if cache duration exceeded (24 hours)
   if (now - serviceCache.lastReset >= CACHE_DURATION) {
     console.log("🔄 [MMT BUSINESS HUB] Auto-resetting 24-hour cache...");
     resetServiceCache();
   }
 
+  // Fetch new data if cache is empty or older than 1 hour
   if (!serviceCache.data || now - serviceCache.lastFetch >= 60 * 60 * 1000) {
-    return await fetchServicesPage();
+    return await fetchServicesFromAPI();
   }
 
   return serviceCache.data || [];
 }
 
+// Optional: Function to fetch specific service details
+async function getServiceById(serviceId) {
+  try {
+    const services = await getServices();
+    return services.find(service => service.service_id == serviceId) || null;
+  } catch (error) {
+    console.error('Error fetching service by ID:', error);
+    return null;
+  }
+}
+
+// Optional: Function to fetch services by category
+async function getServicesByCategory(category) {
+  try {
+    const services = await getServices();
+    return services.filter(service => 
+      service.category.toLowerCase().includes(category.toLowerCase())
+    );
+  } catch (error) {
+    console.error('Error fetching services by category:', error);
+    return [];
+  }
+}
+
 global.mmtServices = {
   getServices,
   resetServiceCache,
-  fetchServicesPage
+  fetchServicesFromAPI,
+  getServiceById,
+  getServicesByCategory
 };
 
 if (!fs.existsSync(__dirname + '/auth_info_baileys/creds.json')) {
@@ -173,18 +192,18 @@ global.pluginHooks = global.pluginHooks || [];
 const autoGreetingsPlugin = require('./plugins/ai.js');
 global.pluginHooks.push(autoGreetingsPlugin);
 
-
 async function connectToWA() {
   console.log("🛰️ [MMT BUSINESS HUB] Initializing WhatsApp connection...");
 
   try {
-    console.log("📥 [MMT BUSINESS HUB] Pre-loading services cache (required for bot startup)...");
-    const services = await fetchServicesPage();
+    console.log("📥 [MMT BUSINESS HUB] Pre-loading services cache from API (required for bot startup)...");
+    const services = await fetchServicesFromAPI();
 
     if (services && services.length > 0) {
       console.log(`✅ [MMT BUSINESS HUB] Services pre-loaded successfully: ${services.length} items`);
+      console.log('📊 Sample service:', services[0]); // Log first service as sample
     } else {
-      throw new Error("No services loaded from the website");
+      throw new Error("No services loaded from API");
     }
 
   } catch (error) {
@@ -227,13 +246,17 @@ async function connectToWA() {
 ┃ 📡 *Business Account* : MMT BUSINESS HUB
 ┃ 💠 *Powered By* : WhatsApp Business API
 ┃ 📊 *Services Cached* : ${serviceCache.data ? serviceCache.data.length : 0} items
+┃ 🔌 *Data Source* : Official API
+┃ 🌐 *Group Support* : ENABLED
 ┃                                           
 ╰━━━━━━━━━━━━━━━━━━━━╯
 
 🌟 *Social Media Marketing Assistant Ready!*  
 
-💼 *Use .ping to test is bot alive or not*
-🔹 *Use bank details for get bank details*
+💼 *Use .ping to test if bot is alive or not*
+🔹 *Use .bank for bank details*
+🔹 *Use .services to see all available services*
+🔹 *Use .order to place an order*
 
 🎯 *Growing Your Business, One Click at a Time!*
 ╰━━━━━━━━━━━━━━━━━━━━╯
@@ -266,17 +289,11 @@ async function connectToWA() {
       }
     }
 
-    // Check if message is from group
+    // Get message details
     const from = mek.key.remoteJid;
     const isGroup = from && from.endsWith('@g.us');
     
-    // Block all plugin functionality in groups
-    if (isGroup) {
-      console.log('🚫 Ignoring group message from:', from);
-      return; // Skip all plugin processing for groups
-    }
-
-    // Only process plugins for private messages
+    // Process plugins for all messages (both private and group)
     if (global.pluginHooks) {
       for (const plugin of global.pluginHooks) {
         if (plugin.onMessage) {
@@ -424,17 +441,7 @@ async function connectToWA() {
   });
 
   conn.ev.on('messages.update', async (updates) => {
-    // Check if update is from group
-    const updRemote = (updates && updates[0] && updates[0].key && updates[0].key.remoteJid) || '';
-    const isGroupUpdate = updRemote && updRemote.endsWith('@g.us');
-    
-    // Block all plugin delete functionality in groups
-    if (isGroupUpdate) {
-      console.log('🚫 Ignoring messages.update for group:', updRemote);
-      return;
-    }
-
-    // Only process delete events for private messages
+    // Process delete events for all chats (including groups)
     if (global.pluginHooks) {
       for (const plugin of global.pluginHooks) {
         if (plugin.onDelete) {
