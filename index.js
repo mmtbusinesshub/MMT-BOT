@@ -305,19 +305,6 @@ async function connectToWA() {
     // Get message details
     const from = mek.key.remoteJid;
     const isGroup = from && from.endsWith('@g.us');
-    
-    // Process plugins for all messages (both private and group)
-    if (global.pluginHooks) {
-      for (const plugin of global.pluginHooks) {
-        if (plugin.onMessage) {
-          try {
-            await plugin.onMessage(conn, mek);
-          } catch (e) {
-            console.log("[MMT BUSINESS HUB] onMessage error:", e);
-          }
-        }
-      }
-    }
 
     mek.message = (getContentType(mek.message) === 'ephemeralMessage')
       ? mek.message.ephemeralMessage.message
@@ -381,6 +368,24 @@ async function connectToWA() {
     const isMe = botNumber.includes(senderNumber);
     const isOwner = ownerNumber.includes(senderNumber) || isMe;
 
+    const currentMode = (config.MODE || 'public').toLowerCase();
+
+// PRIVATE MODE CHECK - Block ALL non-owner messages (commands AND plugins)
+if (currentMode === 'private' && !isOwner) {
+  console.log(`🔒 [MMT BUSINESS HUB] Private mode: Ignoring message from non-owner ${senderNumber} in ${isGroup ? 'group' : 'private'}`);
+  return; // Exit early - no plugins or commands will process
+}
+    if (global.pluginHooks) {
+  for (const plugin of global.pluginHooks) {
+    if (plugin.onMessage) {
+      try {
+        await plugin.onMessage(conn, mek);
+      } catch (e) {
+        console.log("[MMT BUSINESS HUB] onMessage error:", e);
+      }
+    }
+  }
+}
     const botNumber2 = await jidNormalizedUser(conn.user.id);
 
     const groupMetadata = isGroup ? await conn.groupMetadata(from).catch(() => ({})) : {};
