@@ -169,13 +169,8 @@ if (!fs.existsSync(__dirname + '/auth_info_baileys/creds.json')) {
 }
 
 const { replyHandlers, commands } = require('./command');
-const antiDeletePlugin = require('./plugins/antidelete.js');
-global.pluginHooks = global.pluginHooks || [];
-global.pluginHooks.push(antiDeletePlugin);
 const autoGreetingsPlugin = require('./plugins/ai.js');
 global.pluginHooks.push(autoGreetingsPlugin);
-const bankDetailsPlugin = require('./plugins/bank.js');
-global.pluginHooks.push(bankDetailsPlugin);
 const hostingPlugin = require('./plugins/hosting.js');
 global.pluginHooks.push(hostingPlugin);
 const adminDetails = require('./plugins/admin_details.js');
