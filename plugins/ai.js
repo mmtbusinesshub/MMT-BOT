@@ -25,47 +25,33 @@ async function updateExchangeRates() {
 updateExchangeRates();
 setInterval(updateExchangeRates, 12 * 60 * 60 * 1000); 
 
-function extractLKRPrice(priceStr) {
-  if (!priceStr) return 0;
+function convertFromLKR(rateInLKR) {
+  if (!rateInLKR || isNaN(rateInLKR)) return null;
   
-  // Extract numeric value from price string (API returns LKR)
-  const match = priceStr.match(/(?:Rs\.?|LKR)?\s*([\d,.]+)/i);
-  if (match) {
-    return parseFloat(match[1].replace(/,/g, ''));
-  }
+  const lkrValue = parseFloat(rateInLKR);
   
-  return 0;
-}
-
-function convertFromLKR(priceInLKR) {
-  if (!priceInLKR || isNaN(priceInLKR)) return null;
-  
-  // Convert LKR to USD and INR
-  const usdValue = (priceInLKR * lkrToUsd).toFixed(2);
-  const inrValue = (priceInLKR * lkrToInr).toFixed(2);
+  // Convert LKR to USD and INR (keep decimals)
+  const usdValue = (lkrValue * lkrToUsd).toFixed(4);
+  const inrValue = (lkrValue * lkrToInr).toFixed(4);
   
   return {
-    lkr: Math.round(priceInLKR),
+    lkr: lkrValue.toFixed(2),
     usd: usdValue,
     inr: inrValue
   };
 }
 
 function formatPriceDisplay(service) {
-  const lkrPrice = extractLKRPrice(service.price);
-  const converted = convertFromLKR(lkrPrice);
+  const rate = service.rate; // API returns like "0.90" or "8"
+  const converted = convertFromLKR(rate);
   
   if (!converted) return "Price not available";
   
-  // Extract per unit info
-  const perMatch = service.price.match(/per\s*([\d,.]+k?)/i);
-  const perText = perMatch ? ` per ${perMatch[1]}` : "";
-  
   return `┌─ 💰 *Price Details*\n` +
-         `│ 📍 LKR: Rs. ${converted.lkr.toLocaleString()}${perText}\n` +
-         `│ 💵 USD: $${converted.usd}${perText}\n` +
-         `│ 💴 INR: ₹${converted.inr}${perText}\n` +
-         `│ 🆔 Service ID: ${service.service_id}\n` +
+         `│ 📍 LKR: Rs ${converted.lkr} PER 1K\n` +
+         `│ 💵 USD: $${converted.usd} PER 1K\n` +
+         `│ 💴 INR: ₹${converted.inr} PER 1K\n` +
+         `│ 🆔 Service ID: ${service.service}\n` +
          `└────────────`;
 }
 
@@ -79,7 +65,7 @@ function normalize(text) {
 }
 
 function extractNumericPrice(service) {
-  return extractLKRPrice(service.price);
+  return parseFloat(service.rate) || 0;
 }
 
 function detectServiceType(query) {
@@ -148,7 +134,7 @@ function filterServicesByType(services, platform, serviceType) {
 function getTopServices(services) {
   if (!services || services.length === 0) return [];
   
-  // Sort by price (LKR)
+  // Sort by rate (LKR price)
   const sorted = [...services].sort((a, b) => {
     const priceA = extractNumericPrice(a);
     const priceB = extractNumericPrice(b);
@@ -162,7 +148,7 @@ function getTopServices(services) {
   // Combine and remove duplicates
   const combined = [...lowest, ...highest];
   const unique = combined.filter((service, index, self) => 
-    index === self.findIndex(s => s.service_id === service.service_id)
+    index === self.findIndex(s => s.service === service.service)
   );
   
   return unique;
@@ -261,7 +247,7 @@ module.exports = {
       messageText += `📞 *Support:* wa.me/94722136082\n`;
       messageText += `🌐 *Website:* https://makemetrend.online\n`;
       messageText += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      messageText += `_💡 Reply with .order <service_id> <quantity> to place an order_`;
+      messageText += `_💡 Reply with .order ${selectedServices[0]?.service} <quantity> to place an order_`;
 
       await conn.sendMessage(from, {
         image: { url: serviceLogo },
