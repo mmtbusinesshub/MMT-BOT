@@ -3,240 +3,236 @@ const axios = require("axios");
 let lkrToUsd = 0.0033;
 let lkrToInr = 0.29;
 
-// Enhanced category filters based on your dropdown data
-const CATEGORY_FILTERS = {
-    // TikTok Categories
-    'tiktok_followers': {
-        platform   : 'tiktok',
-        type       : 'followers',
-        keywords   : ['tiktok followers', 'tt followers', 'tiktok foll', 'non drop followers', 'targeted followers', 'real followers tiktok', 'tiktok subs'],
-        categoryIds: [1, 6, 8, 10, 12, 14, 127, 129, 131, 132, 133],
-        subTypes   : ['non drop', 'targeted', 'real accounts', 'auto refill', 'with posts', 'saudi arabia']
-    },
-    'tiktok_likes': {
-        platform   : 'tiktok',
-        type       : 'likes',
-        keywords   : ['tiktok likes', 'tt likes', 'tiktok lik', 'video likes', 'like tiktok', 'profile photos likes', 'hq likes', 'drop 0% likes'],
-        categoryIds: [2, 3, 7, 15, 23, 128],
-        subTypes   : ['profile photos', 'hq accounts', 'auto refill', 'drop 0%', 'super fast']
-    },
-    'tiktok_views': {
-        platform   : 'tiktok',
-        type       : 'views',
-        keywords   : ['tiktok views', 'tt views', 'video views', 'tiktok vw', 'views tiktok', 'non drop views', 'best price views'],
-        categoryIds: [4, 9, 13, 16, 20, 21, 121, 122, 133],
-        subTypes   : ['non drop', 'auto refill', 'drop 0%', 'fast', 'cheapest']
-    },
-    'tiktok_comments': {
-        platform   : 'tiktok',
-        type       : 'comments',
-        keywords   : ['tiktok comments', 'tt comments', 'video comments', 'comment tiktok'],
-        categoryIds: [19, 24],
-        subTypes   : ['custom comments', 'cheapest']
-    },
-    'tiktok_shares': {
-        platform   : 'tiktok',
-        type       : 'shares',
-        keywords   : ['tiktok shares', 'tt shares', 'video shares', 'share tiktok', 'reposts'],
-        categoryIds: [5, 18, 123],
-        subTypes   : ['reposts', 'video share']
-    },
-    'tiktok_saves': {
-        platform   : 'tiktok',
-        type       : 'saves',
-        keywords   : ['tiktok saves', 'tt saves', 'video saves', 'save tiktok'],
-        categoryIds: [11, 17],
-        subTypes   : ['video save']
-    },
-    'tiktok_live': {
-        platform   : 'tiktok',
-        type       : 'live',
-        keywords   : ['tiktok live', 'tt live', 'live stream', 'live views', 'live likes', 'live share'],
-        categoryIds: [25],
-        subTypes   : ['live views', 'live likes', 'live share']
-    },
-
-    // Instagram Categories
-    'instagram_followers': {
-        platform   : 'instagram',
-        type       : 'followers',
-        keywords   : ['instagram followers', 'ig followers', 'insta followers', 'real followers ig', 'old accounts followers', 'growth followers'],
-        categoryIds: [26, 27, 28, 35, 45, 46, 47, 48, 49, 126],
-        subTypes   : ['real accounts', 'with posts', 'old accounts', 'cheapest', 'premium growth', 'lifetime', 'no refill']
-    },
-    'instagram_likes': {
-        platform   : 'instagram',
-        type       : 'likes',
-        keywords   : ['instagram likes', 'ig likes', 'insta likes', 'post likes', 'real likes', 'active likes', 'old accounts likes'],
-        categoryIds: [29, 30, 33, 38, 41, 42, 43, 44, 50, 124, 125],
-        subTypes   : ['profile photos', 'real accounts', 'active accounts', 'old accounts', 'drop 0%', 'india', 'slow working', 'auto']
-    },
-    'instagram_views': {
-        platform   : 'instagram',
-        type       : 'views',
-        keywords   : ['instagram views', 'ig views', 'insta views', 'video views', 'story views', 'reels views'],
-        categoryIds: [31, 36, 51, 55],
-        subTypes   : ['story views', 'targeted', 'video views', 'impression']
-    },
-    'instagram_comments': {
-        platform   : 'instagram',
-        type       : 'comments',
-        keywords   : ['instagram comments', 'ig comments', 'insta comments', 'post comments', 'story comments'],
-        categoryIds: [32, 34, 40, 52, 54],
-        subTypes   : ['cheapest', 'recommended', 'best price', 'custom', 'story comments', 'verified']
-    },
-    'instagram_saves': {
-        platform   : 'instagram',
-        type       : 'saves',
-        keywords   : ['instagram saves', 'ig saves', 'insta saves', 'post saves', 'save count'],
-        categoryIds: [57],
-        subTypes   : ['post saves']
-    },
-    'instagram_reposts': {
-        platform   : 'instagram',
-        type       : 'reposts',
-        keywords   : ['instagram repost', 'ig repost', 'insta repost'],
-        categoryIds: [53],
-        subTypes   : ['repost']
-    },
-    'instagram_channel': {
-        platform   : 'instagram',
-        type       : 'channel',
-        keywords   : ['instagram channel', 'ig channel', 'channel members', 'broadcast channel'],
-        categoryIds: [58],
-        subTypes   : ['targeted', 'cheapest']
-    },
-    'instagram_poll': {
-        platform   : 'instagram',
-        type       : 'poll',
-        keywords   : ['instagram poll', 'ig poll', 'story poll', 'poll votes'],
-        categoryIds: [56],
-        subTypes   : ['poll votes']
-    },
-    'instagram_discovery': {
-        platform   : 'instagram',
-        type       : 'discovery',
-        keywords   : ['instagram discovery', 'ig discovery', 'post discovery', 'discovery packages'],
-        categoryIds: [37],
-        subTypes   : ['provider', 'discovery packages']
+// Professional SMM Panel Keyword Categories with exact matching
+const SMM_CATEGORIES = {
+    // ==================== TIKTOK SERVICES ====================
+    tiktok: {
+        followers: {
+            primary   : ['tiktok followers', 'tt followers', 'tiktok fans', 'tiktok subs'],
+            exact     : ['tiktok follower', 'followers for tiktok', 'buy tiktok followers'],
+            exclude   : ['instagram', 'facebook', 'youtube', 'likes', 'views'], // Exclude other platforms & types
+            categoryId: [1, 6, 8, 10, 12, 14, 127, 129, 131, 132],
+            response  : 'tiktok_followers'
+        },
+        likes: {
+            primary   : ['tiktok likes', 'tt likes', 'tiktok heart', 'video likes tiktok'],
+            exact     : ['likes for tiktok', 'buy tiktok likes', 'tiktok post likes'],
+            exclude   : ['instagram', 'facebook', 'youtube', 'followers', 'views'],
+            categoryId: [2, 3, 7, 15, 23, 128],
+            response  : 'tiktok_likes'
+        },
+        views: {
+            primary   : ['tiktok views', 'tt views', 'tiktok video views', 'tiktok plays'],
+            exact     : ['views for tiktok', 'buy tiktok views', 'tiktok video plays'],
+            exclude   : ['instagram', 'facebook', 'youtube', 'followers', 'likes'],
+            categoryId: [4, 9, 13, 16, 20, 21, 121, 122, 133],
+            response  : 'tiktok_views'
+        },
+        comments: {
+            primary   : ['tiktok comments', 'tt comments', 'tiktok comment'],
+            exact     : ['comments for tiktok', 'buy tiktok comments'],
+            exclude   : ['instagram', 'facebook', 'youtube', 'followers', 'likes', 'views'],
+            categoryId: [19, 24],
+            response  : 'tiktok_comments'
+        },
+        shares: {
+            primary   : ['tiktok shares', 'tt shares', 'tiktok share', 'tiktok repost'],
+            exact     : ['shares for tiktok', 'buy tiktok shares'],
+            exclude   : ['instagram', 'facebook', 'youtube', 'followers', 'likes', 'views'],
+            categoryId: [5, 18, 123],
+            response  : 'tiktok_shares'
+        },
+        saves: {
+            primary   : ['tiktok saves', 'tt saves', 'tiktok save', 'tiktok bookmark'],
+            exact     : ['saves for tiktok', 'buy tiktok saves'],
+            exclude   : ['instagram', 'facebook', 'youtube', 'followers', 'likes', 'views'],
+            categoryId: [11, 17],
+            response  : 'tiktok_saves'
+        },
+        live: {
+            primary   : ['tiktok live', 'tt live', 'tiktok live stream', 'tiktok live views'],
+            exact     : ['live views for tiktok', 'tiktok live stream views'],
+            exclude   : ['instagram', 'facebook', 'youtube', 'followers', 'likes', 'views'],
+            categoryId: [25],
+            response  : 'tiktok_live'
+        }
     },
 
-    // Facebook Categories
-    'facebook_followers': {
-        platform   : 'facebook',
-        type       : 'followers',
-        keywords   : ['facebook followers', 'fb followers', 'page followers', 'profile followers', 'hidden accounts followers'],
-        categoryIds: [59, 62, 63, 64, 65, 74, 75],
-        subTypes   : ['hidden accounts', 'cheapest', 'page likes', 'fast completed']
-    },
-    'facebook_likes': {
-        platform   : 'facebook',
-        type       : 'likes',
-        keywords   : ['facebook likes', 'fb likes', 'post likes', 'page likes', 'reactions'],
-        categoryIds: [60, 61, 65, 67, 73, 74, 76, 80],
-        subTypes   : ['post likes', 'post reactions', 'page likes', 'guaranteed']
-    },
-    'facebook_views': {
-        platform   : 'facebook',
-        type       : 'views',
-        keywords   : ['facebook views', 'fb views', 'video views', 'reels views', 'story views', 'live views'],
-        categoryIds: [68, 70, 72, 77],
-        subTypes   : ['live views', 'video views', 'story views', 'watch time']
-    },
-    'facebook_comments': {
-        platform   : 'facebook',
-        type       : 'comments',
-        keywords   : ['facebook comments', 'fb comments', 'post comments', 'video comments'],
-        categoryIds: [69, 79],
-        subTypes   : ['best price', 'cheapest']
-    },
-    'facebook_story': {
-        platform   : 'facebook',
-        type       : 'story',
-        keywords   : ['facebook story', 'fb story', 'story reactions', 'story views'],
-        categoryIds: [71, 77, 78],
-        subTypes   : ['story reactions', 'story views']
-    },
-    'facebook_group': {
-        platform   : 'facebook',
-        type       : 'group',
-        keywords   : ['facebook group', 'fb group', 'group members'],
-        categoryIds: [66],
-        subTypes   : ['group members']
-    },
-
-    // YouTube Categories
-    'youtube_views': {
-        platform   : 'youtube',
-        type       : 'views',
-        keywords   : ['youtube views', 'yt views', 'video views', 'shorts views', 'adwords views', 'real views'],
-        categoryIds: [81, 82, 93, 96, 97, 98, 105, 106],
-        subTypes   : ['best', 'recommended', 'adwords', 'real quality', 'ctr search', 'native ads']
-    },
-    'youtube_subscribers': {
-        platform   : 'youtube',
-        type       : 'subscribers',
-        keywords   : ['youtube subscribers', 'yt subscribers', 'subs', 'channel subscribers', 'real subscribers'],
-        categoryIds: [88, 91, 107, 108, 109, 115],
-        subTypes   : ['fastest', 'real', 'targeted', 'organic']
-    },
-    'youtube_comments': {
-        platform   : 'youtube',
-        type       : 'comments',
-        keywords   : ['youtube comments', 'yt comments', 'video comments', 'shorts comments', 'ai comments', 'custom comments'],
-        categoryIds: [83, 85, 87, 111],
-        subTypes   : ['custom', 'ai generated', 'live chat', 'reply comments']
-    },
-    'youtube_comment_likes': {
-        platform   : 'youtube',
-        type       : 'comment_likes',
-        keywords   : ['youtube comment likes', 'yt comment likes', 'reply likes', 'comment likes'],
-        categoryIds: [84, 86, 112],
-        subTypes   : ['reply likes', 'comment likes']
-    },
-    'youtube_watch_time': {
-        platform   : 'youtube',
-        type       : 'watch_time',
-        keywords   : ['youtube watch time', 'yt watch time', 'watch hours', 'watch minutes', 'watchtime'],
-        categoryIds: [89, 94, 102, 103, 104],
-        subTypes   : ['watch hours', 'google ads', 'stabil']
-    },
-    'youtube_live': {
-        platform   : 'youtube',
-        type       : 'live',
-        keywords   : ['youtube live', 'yt live', 'live stream', 'live views', 'live chat', 'live reaction'],
-        categoryIds: [87, 95, 113, 114],
-        subTypes   : ['live views', 'live chat', 'live reaction', 'concurrent']
-    },
-    'youtube_shares': {
-        platform   : 'youtube',
-        type       : 'shares',
-        keywords   : ['youtube shares', 'yt shares', 'video shares', 'shorts shares'],
-        categoryIds: [99, 100, 101],
-        subTypes   : ['choose speed', 'choose geo', 'choose referrer']
-    },
-    'youtube_hype': {
-        platform   : 'youtube',
-        type       : 'hype',
-        keywords   : ['youtube hype', 'yt hype', 'hype boost'],
-        categoryIds: [92],
-        subTypes   : ['hype boost']
+    // ==================== INSTAGRAM SERVICES ====================
+    instagram: {
+        followers: {
+            primary   : ['instagram followers', 'ig followers', 'insta followers', 'ig fans'],
+            exact     : ['followers for instagram', 'buy instagram followers', 'increase instagram followers'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'likes', 'views', 'story'],
+            categoryId: [26, 27, 28, 35, 45, 46, 47, 48, 49, 126],
+            response  : 'instagram_followers'
+        },
+        likes: {
+            primary   : ['instagram likes', 'ig likes', 'insta likes', 'post likes instagram'],
+            exact     : ['likes for instagram', 'buy instagram likes', 'instagram post likes'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'followers', 'views', 'story'],
+            categoryId: [29, 30, 33, 38, 41, 42, 43, 44, 50, 124, 125],
+            response  : 'instagram_likes'
+        },
+        views: {
+            primary   : ['instagram views', 'ig views', 'insta views', 'video views instagram', 'reels views'],
+            exact     : ['views for instagram', 'buy instagram views', 'instagram video views'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'followers', 'likes', 'story'],
+            categoryId: [31, 36, 51, 55],
+            response  : 'instagram_views'
+        },
+        story: {  // SPECIFIC STORY CATEGORY
+            primary   : ['instagram story', 'ig story', 'insta story', 'story views', 'story reactions'],
+            exact     : ['story views', 'instagram story views', 'story likes', 'story reactions'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'followers', 'post', 'reels', 'video'],
+            categoryId: [31, 36, 51], // Story-specific category IDs
+            response  : 'instagram_story'
+        },
+        comments: {
+            primary   : ['instagram comments', 'ig comments', 'insta comments', 'post comments'],
+            exact     : ['comments for instagram', 'buy instagram comments'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'followers', 'likes', 'views', 'story'],
+            categoryId: [32, 34, 40, 52, 54],
+            response  : 'instagram_comments'
+        },
+        saves: {
+            primary   : ['instagram saves', 'ig saves', 'insta saves', 'post saves'],
+            exact     : ['saves for instagram', 'buy instagram saves'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'followers', 'likes', 'views', 'story'],
+            categoryId: [57],
+            response  : 'instagram_saves'
+        },
+        channel: {
+            primary   : ['instagram channel', 'ig channel', 'broadcast channel', 'channel members'],
+            exact     : ['instagram channel members', 'ig broadcast channel'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'followers', 'likes', 'views', 'story'],
+            categoryId: [58],
+            response  : 'instagram_channel'
+        },
+        poll: {
+            primary   : ['instagram poll', 'ig poll', 'story poll', 'poll votes'],
+            exact     : ['poll votes for instagram', 'instagram story poll'],
+            exclude   : ['tiktok', 'facebook', 'youtube', 'followers', 'likes', 'views'],
+            categoryId: [56],
+            response  : 'instagram_poll'
+        }
     },
 
-    // WhatsApp Categories
-    'whatsapp_channel': {
-        platform   : 'whatsapp',
-        type       : 'channel',
-        keywords   : ['whatsapp channel', 'wa channel', 'channel members', 'channel followers', 'whatsapp followers'],
-        categoryIds: [116, 117, 118],
-        subTypes   : ['cheapest', 'targeted']
+    // ==================== FACEBOOK SERVICES ====================
+    facebook: {
+        followers: {
+            primary   : ['facebook followers', 'fb followers', 'page followers', 'profile followers'],
+            exact     : ['followers for facebook', 'buy facebook followers'],
+            exclude   : ['instagram', 'tiktok', 'youtube', 'likes', 'views', 'story'],
+            categoryId: [59, 62, 63, 64, 65, 74, 75],
+            response  : 'facebook_followers'
+        },
+        likes: {
+            primary   : ['facebook likes', 'fb likes', 'post likes', 'page likes', 'reactions'],
+            exact     : ['likes for facebook', 'buy facebook likes', 'facebook post reactions'],
+            exclude   : ['instagram', 'tiktok', 'youtube', 'followers', 'views', 'story'],
+            categoryId: [60, 61, 65, 67, 73, 74, 76, 80],
+            response  : 'facebook_likes'
+        },
+        views: {
+            primary   : ['facebook views', 'fb views', 'video views', 'reels views', 'live views'],
+            exact     : ['views for facebook', 'buy facebook views', 'facebook video views'],
+            exclude   : ['instagram', 'tiktok', 'youtube', 'followers', 'likes', 'story'],
+            categoryId: [68, 70, 72, 77],
+            response  : 'facebook_views'
+        },
+        story: {
+            primary   : ['facebook story', 'fb story', 'story views', 'story reactions'],
+            exact     : ['facebook story views', 'fb story reactions'],
+            exclude   : ['instagram', 'tiktok', 'youtube', 'followers', 'likes', 'post'],
+            categoryId: [71, 77, 78],
+            response  : 'facebook_story'
+        },
+        comments: {
+            primary   : ['facebook comments', 'fb comments', 'post comments'],
+            exact     : ['comments for facebook', 'buy facebook comments'],
+            exclude   : ['instagram', 'tiktok', 'youtube', 'followers', 'likes', 'views'],
+            categoryId: [69, 79],
+            response  : 'facebook_comments'
+        },
+        group: {
+            primary   : ['facebook group', 'fb group', 'group members'],
+            exact     : ['facebook group members', 'fb group join'],
+            exclude   : ['instagram', 'tiktok', 'youtube', 'followers', 'likes', 'views'],
+            categoryId: [66],
+            response  : 'facebook_group'
+        }
     },
-    'whatsapp_reactions': {
-        platform   : 'whatsapp',
-        type       : 'reactions',
-        keywords   : ['whatsapp reactions', 'wa reactions', 'emoji reactions', 'channel reactions', 'update reactions'],
-        categoryIds: [119, 120],
-        subTypes   : ['cheap slow', 'complete in 1 minute']
+
+    // ==================== YOUTUBE SERVICES ====================
+    youtube: {
+        subscribers: {
+            primary   : ['youtube subscribers', 'yt subscribers', 'youtube subs', 'channel subscribers'],
+            exact     : ['subscribers for youtube', 'buy youtube subscribers', 'increase youtube subs'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'likes', 'views', 'comments'],
+            categoryId: [88, 91, 107, 108, 109, 115],
+            response  : 'youtube_subscribers'
+        },
+        views: {
+            primary   : ['youtube views', 'yt views', 'video views', 'shorts views'],
+            exact     : ['views for youtube', 'buy youtube views', 'youtube video views'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'followers', 'likes', 'comments'],
+            categoryId: [81, 82, 93, 96, 97, 98, 105, 106],
+            response  : 'youtube_views'
+        },
+        likes: {
+            primary   : ['youtube likes', 'yt likes', 'video likes', 'thumbs up'],
+            exact     : ['likes for youtube', 'buy youtube likes', 'youtube video likes'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'followers', 'views', 'comments'],
+            categoryId: [110],
+            response  : 'youtube_likes'
+        },
+        comments: {
+            primary   : ['youtube comments', 'yt comments', 'video comments'],
+            exact     : ['comments for youtube', 'buy youtube comments'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'followers', 'likes', 'views'],
+            categoryId: [83, 85, 87, 111],
+            response  : 'youtube_comments'
+        },
+        watchtime: {
+            primary   : ['youtube watch time', 'watch hours', 'yt watchtime', 'watch minutes'],
+            exact     : ['youtube watch hours', 'increase watch time', 'buy watch hours'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'followers', 'likes', 'views'],
+            categoryId: [89, 94, 102, 103, 104],
+            response  : 'youtube_watchtime'
+        },
+        live: {
+            primary   : ['youtube live', 'yt live', 'live stream', 'live views'],
+            exact     : ['youtube live views', 'live stream views', 'youtube live chat'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'followers', 'likes', 'views'],
+            categoryId: [87, 95, 113, 114],
+            response  : 'youtube_live'
+        },
+        shares: {
+            primary   : ['youtube shares', 'yt shares', 'video shares'],
+            exact     : ['shares for youtube', 'buy youtube shares'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'followers', 'likes', 'views'],
+            categoryId: [99, 100, 101],
+            response  : 'youtube_shares'
+        }
+    },
+
+    // ==================== WHATSAPP SERVICES ====================
+    whatsapp: {
+        channel: {
+            primary   : ['whatsapp channel', 'wa channel', 'channel members', 'whatsapp followers'],
+            exact     : ['whatsapp channel members', 'wa channel join', 'channel followers'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'youtube', 'likes', 'views'],
+            categoryId: [116, 117, 118],
+            response  : 'whatsapp_channel'
+        },
+        reactions: {
+            primary   : ['whatsapp reactions', 'wa reactions', 'emoji reactions', 'channel reactions'],
+            exact     : ['whatsapp channel reactions', 'wa emoji reactions'],
+            exclude   : ['instagram', 'facebook', 'tiktok', 'youtube', 'followers', 'likes'],
+            categoryId: [119, 120],
+            response  : 'whatsapp_reactions'
+        }
     }
 };
 
@@ -267,8 +263,6 @@ setInterval(updateExchangeRates, 12 * 60 * 60 * 1000);
 
 /**
  * Extract LKR price from price string
- * @param {string} priceStr 
- * @returns {number}
  */
 function extractLKRPrice(priceStr) {
     if (!priceStr) return 0;
@@ -284,8 +278,6 @@ function extractLKRPrice(priceStr) {
 
 /**
  * Convert LKR to other currencies
- * @param {number} priceInLKR 
- * @returns {object|null}
  */
 function convertFromLKR(priceInLKR) {
     if (!priceInLKR || isNaN(priceInLKR)) return null;
@@ -302,8 +294,6 @@ function convertFromLKR(priceInLKR) {
 
 /**
  * Format number with two decimals
- * @param {number} num 
- * @returns {string}
  */
 function formatWithTwoDecimals(num) {
     if (num === null || isNaN(num)) return "0.00";
@@ -327,8 +317,6 @@ function formatWithTwoDecimals(num) {
 
 /**
  * Format LKR price
- * @param {number} price 
- * @returns {string}
  */
 function formatLKRPrice(price) {
     if (price === null || isNaN(price)) return "0";
@@ -353,8 +341,6 @@ function formatLKRPrice(price) {
 
 /**
  * Format price display for service
- * @param {object} service 
- * @returns {string}
  */
 function formatPriceDisplay(service) {
     const lkrPrice = extractLKRPrice(service.price);
@@ -376,8 +362,6 @@ function formatPriceDisplay(service) {
 
 /**
  * Convert number to emoji
- * @param {number} num 
- * @returns {string}
  */
 function numberToEmoji(num) {
     const emojis = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
@@ -386,134 +370,177 @@ function numberToEmoji(num) {
 
 /**
  * Normalize text for comparison
- * @param {string} text 
- * @returns {string}
  */
 function normalize(text) {
     return text.toLowerCase()
-               .replace(/[^a-z0-9\s]/g, "")
-               .replace(/\s+/g, " ")
+               .replace(/[^\w\s]/g, ' ')
+               .replace(/\s+/g, ' ')
                .trim();
 }
 
 /**
  * Extract numeric price from service
- * @param {object} service 
- * @returns {number}
  */
 function extractNumericPrice(service) {
     return extractLKRPrice(service.price);
 }
 
 /**
- * Enhanced detection function using category filters
- * @param {string} query 
- * @returns {object}
+ * PROFESSIONAL SMM DETECTION ENGINE
+ * Accurately detects platform and service type from user query
  */
-function detectServiceDetails(query) {
+function detectSMMService(query) {
     const normalized = normalize(query);
-    const detected = {
+    const words = normalized.split(' ');
+    
+    let detected = {
         platform   : null,
-        type       : null,
-        subType    : null,
+        service    : null,
         categoryIds: [],
-        confidence : 0
+        confidence : 0,
+        matchType  : 'none'
     };
-    
-    let bestMatch     = null;
-    let highestConfidence = 0;
-    
-    for (const [key, category] of Object.entries(CATEGORY_FILTERS)) {
-        // Check main keywords
-        for (const keyword of category.keywords) {
-            if (normalized.includes(keyword)) {
-                const confidence = keyword.length / normalized.length;
-                if (confidence > highestConfidence) {
-                    highestConfidence = confidence;
-                    bestMatch = category;
-                    detected.subType = category.subTypes.find(st => normalized.includes(st.toLowerCase())) || null;
+
+    // First, check for exact matches (highest priority)
+    for (const [platform, services] of Object.entries(SMM_CATEGORIES)) {
+        for (const [serviceType, config] of Object.entries(services)) {
+            // Check exact phrases
+            for (const exact of config.exact) {
+                if (normalized.includes(exact)) {
+                    // Check exclusion words
+                    const hasExclude = config.exclude.some(ex => normalized.includes(ex));
+                    if (!hasExclude) {
+                        return {
+                            platform   : platform,
+                            service    : serviceType,
+                            categoryIds: config.categoryId,
+                            confidence : 1.0,
+                            matchType  : 'exact',
+                            response   : config.response
+                        };
+                    }
                 }
-                break;
             }
+        }
+    }
+
+    // If no exact match, check primary keywords with exclusion
+    for (const [platform, services] of Object.entries(SMM_CATEGORIES)) {
+        for (const [serviceType, config] of Object.entries(services)) {
+            for (const keyword of config.primary) {
+                if (normalized.includes(keyword)) {
+                    // Check if query contains ANY exclude words
+                    const hasExclude = config.exclude.some(ex => normalized.includes(ex));
+                    
+                    if (!hasExclude) {
+                        // Calculate confidence based on keyword length match
+                        const confidence = keyword.length / normalized.length;
+                        
+                        // Only accept if confidence is reasonable
+                        if (confidence > 0.3) {
+                            return {
+                                platform   : platform,
+                                service    : serviceType,
+                                categoryIds: config.categoryId,
+                                confidence : confidence,
+                                matchType  : 'primary',
+                                response   : config.response
+                            };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Last resort: Check if platform and service are mentioned separately
+    let mentionedPlatforms = [];
+    let mentionedServices = [];
+    
+    for (const [platform, services] of Object.entries(SMM_CATEGORIES)) {
+        const platformKeywords = [platform, 
+                                 platform === 'instagram' ? 'ig' : '',
+                                 platform === 'instagram' ? 'insta' : '',
+                                 platform === 'facebook' ? 'fb' : '',
+                                 platform === 'youtube' ? 'yt' : '',
+                                 platform === 'tiktok' ? 'tt' : '',
+                                 platform === 'whatsapp' ? 'wa' : ''].filter(Boolean);
+        
+        if (platformKeywords.some(k => words.includes(k))) {
+            mentionedPlatforms.push(platform);
         }
         
-        // Check subTypes
-        if (!bestMatch) {
-            for (const subType of category.subTypes) {
-                if (normalized.includes(subType.toLowerCase())) {
-                    const confidence = 0.7; // Good confidence for subtype matches
-                    if (confidence > highestConfidence) {
-                        highestConfidence = confidence;
-                        bestMatch = category;
-                        detected.subType = subType;
-                    }
-                    break;
-                }
+        // Check for service types
+        for (const [serviceType, config] of Object.entries(services)) {
+            if (config.primary.some(k => words.includes(k.split(' ')[0]))) {
+                mentionedServices.push({platform, serviceType, config});
             }
         }
     }
-    
-    if (bestMatch) {
-        detected.platform    = bestMatch.platform;
-        detected.type        = bestMatch.type;
-        detected.categoryIds = bestMatch.categoryIds;
-        detected.confidence  = highestConfidence;
+
+    // If we have both platform and service mentioned
+    if (mentionedPlatforms.length === 1 && mentionedServices.length > 0) {
+        const platform = mentionedPlatforms[0];
+        const serviceMatch = mentionedServices.find(s => s.platform === platform);
+        
+        if (serviceMatch) {
+            return {
+                platform   : platform,
+                service    : serviceMatch.serviceType,
+                categoryIds: serviceMatch.config.categoryId,
+                confidence : 0.6,
+                matchType  : 'combined',
+                response   : serviceMatch.config.response
+            };
+        }
     }
-    
+
     return detected;
 }
 
 /**
- * Filter services by category IDs
- * @param {array} services 
- * @param {array} categoryIds 
- * @returns {array}
+ * Filter services by category IDs with platform validation
  */
-function filterServicesByCategory(services, categoryIds) {
-    if (!services || !services.length || !categoryIds.length) return services;
+function filterServicesByCategory(services, categoryIds, platform) {
+    if (!services || !services.length || !categoryIds.length) return [];
     
     return services.filter(service => {
-        // Check if service category matches any of the categoryIds
-        // You'll need to adjust this based on how your service data structure looks
-        // This assumes services have a category_id field
-        return categoryIds.includes(service.category_id) || 
-               categoryIds.some(id => service.category?.includes(id) || service.name?.includes(id));
+        // Check if service belongs to correct platform
+        const nameLower = service.name.toLowerCase();
+        const platformMatch = !platform || nameLower.includes(platform);
+        
+        // Check category ID match
+        const categoryMatch = categoryIds.includes(service.category_id) ||
+                             categoryIds.some(id => service.category?.includes(id));
+        
+        return platformMatch && categoryMatch;
     });
 }
 
 /**
- * Filter services by platform and type
- * @param {array} services 
- * @param {string} platform 
- * @param {string} serviceType 
- * @returns {array}
+ * Filter services by type (fallback)
  */
 function filterServicesByType(services, platform, serviceType) {
     if (!services || !services.length) return [];
     
-    const normalizedPlatform = platform ? normalize(platform) : '';
-    const normalizedType     = serviceType ? normalize(serviceType) : '';
-    
     return services.filter(service => {
-        const name     = normalize(service.name);
-        const category = normalize(service.category);
+        const name = service.name.toLowerCase();
+        const category = (service.category || '').toLowerCase();
         
-        const matchesPlatform = !platform || 
-            name.includes(normalizedPlatform) || 
-            category.includes(normalizedPlatform);
+        const platformMatch = !platform || 
+            name.includes(platform) || 
+            category.includes(platform);
         
-        const matchesType = !serviceType || 
-            name.includes(normalizedType) || 
-            category.includes(normalizedType);
+        const typeMatch = !serviceType || 
+            name.includes(serviceType) || 
+            category.includes(serviceType);
         
-        return matchesPlatform && matchesType;
+        return platformMatch && typeMatch;
     });
 }
 
 /**
- * Get top services (lowest prices + highest)
- * @param {array} services 
- * @returns {array}
+ * Get top services (lowest 3, highest 2)
  */
 function getTopServices(services) {
     if (!services || services.length === 0) return [];
@@ -524,11 +551,11 @@ function getTopServices(services) {
         return priceA - priceB;
     });
     
-    const lowest  = sorted.slice(0, 3);
-    const highest = sorted.slice(-2);
+    const lowest = sorted.slice(0, Math.min(3, sorted.length));
+    const highest = sorted.length > 3 ? sorted.slice(-2) : [];
     
     const combined = [...lowest, ...highest];
-    const unique   = combined.filter((service, index, self) => 
+    const unique = combined.filter((service, index, self) => 
         index === self.findIndex(s => s.service_id === service.service_id)
     );
     
@@ -537,12 +564,9 @@ function getTopServices(services) {
 
 /**
  * Create service item display
- * @param {object} service 
- * @param {number} index 
- * @returns {string}
  */
 function createServiceItem(service, index) {
-    const emoji        = numberToEmoji(index + 1);
+    const emoji = numberToEmoji(index + 1);
     const priceDisplay = formatPriceDisplay(service);
     
     return `${emoji} *${service.name}*\n` +
@@ -560,7 +584,7 @@ const serviceLogo  = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images
 module.exports = {
     onMessage: async (conn, mek) => {
         try {
-            const key     = mek.key;
+            const key = mek.key;
             const content = mek.message;
             
             if (!content || key.fromMe) return;
@@ -573,19 +597,17 @@ module.exports = {
             
             if (!text.trim()) return;
 
-            const msg  = text.toLowerCase();
             const from = key.remoteJid;
+            const query = text.toLowerCase();
 
-            // Enhanced service keywords including all platforms and types
-            const serviceKeywords = [
-                "price", "service", "cost", "purchase", "order", "rate", "charges",
-                "facebook", "fb", "instagram", "ig", "youtube", "yt", "tiktok", "tt", "telegram",
-                "whatsapp", "wa", "social media", "marketing", "followers", "fans", "subs",
-                "likes", "views", "comments", "shares", "reposts", "saves", "reactions",
-                "live", "stream", "watch time", "hours", "members", "channel"
+            // Service trigger keywords
+            const serviceTriggers = [
+                'price', 'cost', 'rate', 'service', 'buy', 'purchase', 'order',
+                'follower', 'like', 'view', 'comment', 'share', 'repost', 'save',
+                'reaction', 'live', 'stream', 'subscriber', 'member', 'channel'
             ];
             
-            const isServiceQuery = serviceKeywords.some(k => msg.includes(k));
+            const isServiceQuery = serviceTriggers.some(t => query.includes(t));
             if (!isServiceQuery) return;
 
             await conn.sendPresenceUpdate('composing', from);
@@ -594,6 +616,7 @@ module.exports = {
                 await conn.sendMessage(from, { react: { text: "🔍", key: mek.key } }); 
             } catch {}
 
+            // Fetch services
             let services;
             try { 
                 services = await global.mmtServices.getServices(); 
@@ -602,51 +625,83 @@ module.exports = {
                 return; 
             }
 
-            // Use enhanced detection
-            const detected     = detectServiceDetails(text);
-            const platform     = detected.platform || detectPlatform(text);
-            const serviceType  = detected.type || detectServiceType(text);
+            // Use professional SMM detection
+            const detected = detectSMMService(text);
             
-            console.log(`[MMT BUSINESS HUB] Detected: Platform=${platform}, Type=${serviceType}, SubType=${detected.subType}, Confidence=${detected.confidence}`);
+            console.log('📊 [SMM DETECTION] ==================');
+            console.log('Query    :', text);
+            console.log('Platform :', detected.platform);
+            console.log('Service  :', detected.service);
+            console.log('Confidence:', detected.confidence);
+            console.log('Match Type:', detected.matchType);
+            console.log('Category IDs:', detected.categoryIds);
+            console.log('=====================================');
 
             let filtered = [];
-            
-            // First try filtering by category IDs if we have them
-            if (detected.categoryIds.length > 0) {
-                filtered = filterServicesByCategory(services, detected.categoryIds);
+            let responseType = '';
+
+            // If we have confident detection
+            if (detected.confidence >= 0.3 && detected.categoryIds.length > 0) {
+                filtered = filterServicesByCategory(services, detected.categoryIds, detected.platform);
+                responseType = `${detected.platform}_${detected.service}`;
             }
-            
-            // If no results from category filter, fall back to keyword filtering
+
+            // Fallback to platform+type detection
+            if (filtered.length === 0 && detected.platform) {
+                filtered = filterServicesByType(services, detected.platform, detected.service);
+                responseType = `${detected.platform}_${detected.service || 'general'}`;
+            }
+
+            // Final fallback - platform only
+            if (filtered.length === 0 && detected.platform) {
+                filtered = filterServicesByType(services, detected.platform, null);
+                responseType = `${detected.platform}_general`;
+            }
+
+            // No results found
             if (filtered.length === 0) {
-                filtered = filterServicesByType(services, platform, serviceType);
-            }
-            
-            // If still no results, try platform only
-            if (filtered.length === 0 && platform) {
-                filtered = filterServicesByType(services, platform, null);
-            }
-            
-            // If still no results, try type only
-            if (filtered.length === 0 && serviceType) {
-                filtered = filterServicesByType(services, null, serviceType);
+                console.log('❌ No services found for query');
+                return;
             }
 
-            if (filtered.length === 0) return;
-
+            // Get top services to display
             const selectedServices = getTopServices(filtered);
 
-            let messageText = "╭━━━〔 🎯 *MATCHING SERVICES* 〕\n\n";
+            // Build response message
+            let messageText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
             
-            if (platform) {
-                messageText += `📱 *Platform:* ${platform.toUpperCase()}\n`;
+            if (detected.platform) {
+                const platformEmoji = {
+                    'tiktok'   : '🎵',
+                    'instagram': '📷',
+                    'facebook' : '👤',
+                    'youtube'  : '▶️',
+                    'whatsapp' : '💬'
+                }[detected.platform] || '📱';
+                
+                messageText += `${platformEmoji} *Platform:* ${detected.platform.toUpperCase()}\n`;
             }
-            if (serviceType) {
-                messageText += `🎯 *Service:* ${serviceType.toUpperCase()}\n`;
+            
+            if (detected.service) {
+                const serviceEmoji = {
+                    'followers' : '👥',
+                    'likes'     : '❤️',
+                    'views'     : '👀',
+                    'comments'  : '💬',
+                    'shares'    : '🔄',
+                    'saves'     : '🔖',
+                    'story'     : '📖',
+                    'live'      : '🔴',
+                    'channel'   : '📢',
+                    'reactions' : '😊',
+                    'subscribers': '📺',
+                    'watchtime' : '⏱️'
+                }[detected.service] || '🎯';
+                
+                messageText += `${serviceEmoji} *Service:* ${detected.service.toUpperCase()}\n`;
             }
-            if (detected.subType) {
-                messageText += `✨ *Type:* ${detected.subType.toUpperCase()}\n`;
-            }
-            messageText += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+            
+            messageText += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             selectedServices.forEach((service, index) => {
                 messageText += createServiceItem(service, index) + "\n\n";
@@ -654,75 +709,27 @@ module.exports = {
 
             messageText += `📞 *Support:* wa.me/94722136082\n`;
             messageText += `🌐 *Website:* https://makemetrend.online\n`;
-            messageText += `╰━━━━━━━━━━━━━━━━━━━━╯`;
+            messageText += `╰━━━━━━━━━━━━━━━━━━━━━━━━╯`;
 
+            // Send response
             await conn.sendMessage(from, {
-                image : { url: serviceLogo },
+                image: { url: serviceLogo },
                 caption: messageText,
                 contextInfo: { 
-                    forwardingScore              : 999, 
-                    isForwarded                  : true, 
+                    forwardingScore: 999, 
+                    isForwarded: true, 
                     forwardedNewsletterMessageInfo: { 
-                        newsletterJid : channelJid, 
+                        newsletterJid: channelJid, 
                         newsletterName: channelName, 
                         serverMessageId: -1 
                     } 
                 }
             }, { quoted: mek });
 
-            console.log(`✅ [MMT BUSINESS HUB] Sent ${selectedServices.length} service matches to ${from}`);
+            console.log(`✅ [MMT BUSINESS HUB] Sent ${selectedServices.length} ${responseType} services to ${from}`);
             
         } catch (err) {
             console.error("❌ [MMT BUSINESS HUB] AI plugin error:", err);
         }
     }
 };
-
-// Keep original detection functions as fallbacks
-function detectPlatform(query) {
-    const normalized = normalize(query);
-    
-    const platforms = {
-        'instagram': ['instagram', 'ig', 'insta'],
-        'facebook' : ['facebook', 'fb', 'meta'],
-        'tiktok'   : ['tiktok', 'tt'],
-        'youtube'  : ['youtube', 'yt', 'tube'],
-        'telegram' : ['telegram', 'tg'],
-        'twitter'  : ['twitter', 'twt', 'x'],
-        'whatsapp' : ['whatsapp', 'wa']
-    };
-    
-    for (const [platform, keywords] of Object.entries(platforms)) {
-        if (keywords.some(k => normalized.includes(k))) {
-            return platform;
-        }
-    }
-    
-    return null;
-}
-
-function detectServiceType(query) {
-    const normalized = normalize(query);
-    
-    const types = {
-        'followers'  : ['follower', 'followers', 'foll', 'subscriber', 'subscribers', 'fans'],
-        'likes'      : ['like', 'likes', 'lik'],
-        'views'      : ['view', 'views', 'vw'],
-        'comments'   : ['comment', 'comments', 'cmt'],
-        'shares'     : ['share', 'shares'],
-        'reactions'  : ['reaction', 'reactions'],
-        'saves'      : ['save', 'saves'],
-        'reposts'    : ['repost', 'reposts'],
-        'live'       : ['live', 'stream'],
-        'watch_time' : ['watch time', 'watchtime', 'hours', 'minutes'],
-        'channel'    : ['channel', 'members']
-    };
-    
-    for (const [type, keywords] of Object.entries(types)) {
-        if (keywords.some(k => normalized.includes(k))) {
-            return type;
-        }
-    }
-    
-    return 'followers';
-}
