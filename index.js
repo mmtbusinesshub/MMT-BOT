@@ -58,16 +58,23 @@ async function fetchServicesFromAPI() {
     try {
       console.log(`🌐 [MMT BUSINESS HUB] Fetching services from API (Attempt ${attempt}/${maxRetries})...`);
 
-      const response = await axios.post(API_URL, {
-        key: API_KEY,
-        action: 'services'
-      }, {
+      // Fix: Use URLSearchParams instead of JSON
+      const params = new URLSearchParams();
+      params.append('key', API_KEY);
+      params.append('action', 'services');
+
+      const response = await axios.post(API_URL, params, {
         timeout: 30000,
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
       });
+
+      // Check if response has success false
+      if (response.data && response.data.success === false) {
+        throw new Error(`API Error: ${response.data.error || 'Unknown error'}`);
+      }
 
       if (response.status === 200 && Array.isArray(response.data)) {
         // Transform API response to match the existing format
