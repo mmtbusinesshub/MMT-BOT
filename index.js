@@ -198,6 +198,12 @@ const { replyHandlers, commands } = require('./command');
 global.pluginHooks = global.pluginHooks || [];
 const autoGreetingsPlugin = require('./plugins/ai.js');
 global.pluginHooks.push(autoGreetingsPlugin);
+const bankDetailsPlugin = require('./plugins/bank.js');
+global.pluginHooks.push(bankDetailsPlugin);
+const hostingPlugin = require('./plugins/hosting.js');
+global.pluginHooks.push(hostingPlugin);
+const adminDetails = require('./plugins/admin_details.js');
+global.pluginHooks.push(adminDetails);
 
 async function connectToWA() {
   console.log("🛰️ [MMT BUSINESS HUB] Initializing WhatsApp connection...");
