@@ -6,11 +6,11 @@ function convertToBool(text, fault = 'true') {
 }
 
 const defaultConfig = {
-  SESSION_ID: "4ElFWIzT#eA2wYgA9SmJKxcEniIgYc8fefz5OlVNXw-u1Z5Cfjc4", // Put your session id here
+  SESSION_ID: "QElzhZAT#E5NhpX78s4Ux7c6nk2WaxR4Vjr0Q9OHN6Plnx11-nVk", // Put your session id here
   ALIVE_IMG: "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true",
   ALIVE_MSG: "",
-  BOT_OWNER: "94722136082", // Replace your bot owner number here with 94(country code)
-  ownerNumber: ["94722136082"], // Replace your bot owner number here (same as bot owner number)
+  BOT_OWNER: "94716252841", // Replace your bot owner number here with 94(country code)
+  ownerNumber: ["94716252841"], // Replace your bot owner number here (same as bot owner number)
   AUTO_STATUS_REACT: "true",
   AUTO_STATUS_REPLY: "true",
   AUTO_STATUS_SEEN: "true",
