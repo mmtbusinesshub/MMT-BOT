@@ -16,19 +16,22 @@ updateExchangeRate();
 setInterval(updateExchangeRate, 12 * 60 * 60 * 1000); 
 
 function convertToLKR(priceStr) {
-  if (!priceStr) return "";
-
-  const mainMatch = priceStr.match(/₹\s*([\d,.]+)/);
-  if (!mainMatch) return "";
-
-  const inrValue = parseFloat(mainMatch[1].replace(/,/g, ''));
-
-  const perMatch = priceStr.match(/PER\s*([\dKk]+)/i);
-  let perText = perMatch ? perMatch[0] : "";
-
-  const lkrValue = Math.round(inrValue * inrToLkr * 100) / 100; 
-
-  return `${lkrValue} LKR ${perText}\n(${inrValue} INR - ${lkrValue} LKR)`;
+  if (!priceStr) return "Price not available";
+  
+  // Extract INR price (handle different formats)
+  const inrMatch = priceStr.match(/₹?\s*([\d,.]+)/);
+  if (!inrMatch) return priceStr; // Return original if no INR found
+  
+  const inrValue = parseFloat(inrMatch[1].replace(/,/g, ''));
+  if (isNaN(inrValue)) return priceStr;
+  
+  // Extract per unit info (per 1000, per 1k, etc)
+  const perMatch = priceStr.match(/per\s*([\d,.]+k?)/i);
+  const perText = perMatch ? ` per ${perMatch[1]}` : "";
+  
+  const lkrValue = Math.round(inrValue * inrToLkr);
+  
+  return `Rs. ${lkrValue.toLocaleString()} LKR${perText}`;
 }
 
 function numberToEmoji(num) {
@@ -40,83 +43,108 @@ function normalize(text) {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
 }
 
-function extractPriceRange(message) {
-  const rangeMatch = message.match(/(\d+)\s*\$?\s*-\s*\$?\s*(\d+)/i);
-  if (rangeMatch) return { min: parseInt(rangeMatch[1]), max: parseInt(rangeMatch[2]), type: 'range' };
-
-  const singleMatch = message.match(/(\d+)\s*\$/g);
-  if (singleMatch) {
-    const prices = singleMatch.map(p => parseInt(p.replace(/\$/g, "")));
-    return { min: Math.min(...prices), max: Math.max(...prices), type: prices.length > 1 ? 'multiple' : 'single' };
-  }
-
-  return null;
-}
-
 function extractNumericPrice(priceStr) {
-  const match = priceStr.match(/₹\s*([\d,.]+)/);
+  const match = priceStr.match(/₹?\s*([\d,.]+)/);
   return match ? parseFloat(match[1].replace(/,/g, "")) : 0;
 }
 
-function filterServicesByPlatform(services, platform, serviceType = 'likes') {
-  const plat = normalize(platform);
-  const type = normalize(serviceType);
+function detectServiceType(query) {
+  const normalized = normalize(query);
+  
+  // Service type mapping
+  const types = {
+    'followers': ['follower', 'followers', 'foll', 'subscriber', 'subscribers'],
+    'likes': ['like', 'likes', 'lik'],
+    'views': ['view', 'views', 'vw'],
+    'comments': ['comment', 'comments', 'cmt'],
+    'shares': ['share', 'shares']
+  };
+  
+  for (const [type, keywords] of Object.entries(types)) {
+    if (keywords.some(k => normalized.includes(k))) {
+      return type;
+    }
+  }
+  
+  return 'followers'; // Default to followers if no specific type detected
+}
+
+function detectPlatform(query) {
+  const normalized = normalize(query);
+  
+  // Platform mapping
+  const platforms = {
+    'instagram': ['instagram', 'ig', 'insta'],
+    'facebook': ['facebook', 'fb', 'meta'],
+    'tiktok': ['tiktok', 'tt'],
+    'youtube': ['youtube', 'yt', 'tube'],
+    'telegram': ['telegram', 'tg'],
+    'twitter': ['twitter', 'twt', 'x']
+  };
+  
+  for (const [platform, keywords] of Object.entries(platforms)) {
+    if (keywords.some(k => normalized.includes(k))) {
+      return platform;
+    }
+  }
+  
+  return null;
+}
+
+function filterServicesByType(services, platform, serviceType) {
+  if (!services || !services.length) return [];
+  
+  const normalizedPlatform = normalize(platform || '');
+  const normalizedType = normalize(serviceType || '');
+  
   return services.filter(service => {
-    const sName = normalize(service.name);
-    const sCat = normalize(service.category);
-    const matchesPlatform = sName.includes(plat) || sCat.includes(plat);
-    const matchesType = sName.includes(type) || sCat.includes(type) || sName.includes('follower') || sCat.includes('follower');
+    const name = normalize(service.name);
+    const category = normalize(service.category);
+    
+    // Check if service matches platform
+    const matchesPlatform = !platform || 
+      name.includes(normalizedPlatform) || 
+      category.includes(normalizedPlatform);
+    
+    // Check if service matches type
+    const matchesType = !serviceType || 
+      name.includes(normalizedType) || 
+      category.includes(normalizedType);
+    
     return matchesPlatform && matchesType;
   });
 }
 
-function filterServicesByPrice(services, priceRange) {
-  return services.filter(service => {
-    const price = extractNumericPrice(service.price);
-    return price >= priceRange.min && price <= priceRange.max;
+function getPriceSortedServices(services) {
+  // Sort services by price
+  const sorted = [...services].sort((a, b) => {
+    const priceA = extractNumericPrice(a.price);
+    const priceB = extractNumericPrice(b.price);
+    return priceA - priceB;
   });
+  
+  // Get 3 lowest and 2 highest
+  const lowest = sorted.slice(0, 3);
+  const highest = sorted.slice(-2);
+  
+  // Combine and remove duplicates
+  const combined = [...lowest, ...highest];
+  const unique = combined.filter((service, index, self) => 
+    index === self.findIndex(s => s.service_id === service.service_id)
+  );
+  
+  return unique;
 }
 
-function sortServicesByPrice(services, ascending = true) {
-  return services.sort((a, b) => {
-    const aPrice = extractNumericPrice(a.price);
-    const bPrice = extractNumericPrice(b.price);
-    return ascending ? aPrice - bPrice : bPrice - aPrice;
-  });
-}
-
-function getTopServices(services) {
-  if (services.length <= 5) return services;
-  const sorted = sortServicesByPrice(services);
-  return [...sorted.slice(0, 3), ...sorted.slice(-2)];
-}
-
-function findMatchingServices(query, services) {
-  if (!services || services.length === 0) return [];
-  const normalizedQuery = normalize(query);
-
-  const platforms = ['instagram','facebook','fb','ig','tiktok','youtube','telegram','twitter'];
-  const serviceTypes = ['likes','followers','views','comments','shares'];
-
-  let targetPlatform = null, targetServiceType = 'likes';
-
-  for (const p of platforms) if (normalizedQuery.includes(p)) { targetPlatform = p; break; }
-  for (const t of serviceTypes) if (normalizedQuery.includes(t)) { targetServiceType = t; break; }
-
-  const priceRange = extractPriceRange(query);
-
-  let filtered = services;
-  if (targetPlatform) filtered = filterServicesByPlatform(filtered, targetPlatform, targetServiceType);
-  if (priceRange) filtered = filterServicesByPrice(filtered, priceRange);
-  else if (targetPlatform) filtered = getTopServices(filtered);
-
-  return filtered;
-}
-
-function createSectionSeparator() { return "────────────────────"; }
 function createServiceItem(service, index) {
   const emoji = numberToEmoji(index + 1);
-  return `${emoji} *${service.name}*\n💰 Price: ${convertToLKR(service.price)}\n📦 Quantity: ${service.min}-${service.max}\n🔗 ${service.link}\n${createSectionSeparator()}`;
+  const lkrPrice = convertToLKR(service.price);
+  
+  return `${emoji} *${service.name}*\n` +
+         `💰 Price: ${lkrPrice}\n` +
+         `📦 Min: ${service.min} | Max: ${service.max}\n` +
+         `🔗 https://makemetrend.online/services\n` +
+         `────────────────────`;
 }
 
 const channelJid = '120363423526129509@newsletter'; 
@@ -130,46 +158,107 @@ module.exports = {
       const content = mek.message;
       if (!content || key.fromMe) return;
 
-      const text = content.conversation || content.extendedTextMessage?.text || content.imageMessage?.caption || content.videoMessage?.caption || content.documentMessage?.caption || "";
+      const text = content.conversation || 
+                  content.extendedTextMessage?.text || 
+                  content.imageMessage?.caption || 
+                  content.videoMessage?.caption || 
+                  content.documentMessage?.caption || "";
+      
       if (!text.trim()) return;
 
       const msg = text.toLowerCase();
       const from = key.remoteJid;
 
-      const serviceKeywords = ["price","service","cost","purchase","order","rate","charges","facebook","fb","instagram","ig","youtube","tiktok","social media","marketing","followers","likes","views","comments","shares"];
+      // Keywords to trigger service response
+      const serviceKeywords = [
+        "price", "service", "cost", "purchase", "order", "rate", "charges",
+        "facebook", "fb", "instagram", "ig", "youtube", "tiktok", "telegram",
+        "social media", "marketing", "followers", "likes", "views", "comments"
+      ];
+      
       const isServiceQuery = serviceKeywords.some(k => msg.includes(k));
       if (!isServiceQuery) return;
 
-      try { await conn.sendMessage(from, { react: { text: "❤️", key: mek.key } }); } catch{}
+      // Send typing indicator
+      await conn.sendPresenceUpdate('composing', from);
+      
+      // React to message
+      try { 
+        await conn.sendMessage(from, { react: { text: "🔍", key: mek.key } }); 
+      } catch{}
 
+      // Get services
       let services;
-      try { services = await global.mmtServices.getServices(); if (!services?.length) return; } catch { return; }
+      try { 
+        services = await global.mmtServices.getServices(); 
+        if (!services?.length) return; 
+      } catch { 
+        return; 
+      }
 
-      const matches = findMatchingServices(text, services);
-      if (!matches.length) return;
+      // Detect what user wants
+      const platform = detectPlatform(text);
+      const serviceType = detectServiceType(text);
+      
+      console.log(`[MMT BUSINESS HUB] Detected: Platform=${platform}, Type=${serviceType}`);
 
-      let messageText = "🎯 *MATCHING SERVICES FOUND*\n\n";
-      const matchesByCategory = {};
-      matches.forEach(service => {
-        if (!matchesByCategory[service.category]) matchesByCategory[service.category] = [];
-        matchesByCategory[service.category].push(service);
+      // Filter services
+      let filtered = filterServicesByType(services, platform, serviceType);
+      
+      // If no matches with specific platform, try without platform
+      if (filtered.length === 0 && platform) {
+        filtered = filterServicesByType(services, null, serviceType);
+      }
+      
+      // If still no matches, show popular services of detected type
+      if (filtered.length === 0) {
+        filtered = filterServicesByType(services, null, serviceType);
+      }
+
+      if (filtered.length === 0) return;
+
+      // Get 3 lowest and 2 highest price services
+      const selectedServices = getPriceSortedServices(filtered);
+
+      // Build response message
+      let messageText = "╭━━━〔 🎯 *MATCHING SERVICES* 〕━━━╮\n\n";
+      
+      if (platform) {
+        messageText += `📱 *Platform:* ${platform.toUpperCase()}\n`;
+      }
+      if (serviceType) {
+        messageText += `🎯 *Service:* ${serviceType.toUpperCase()}\n`;
+      }
+      messageText += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+      // Add services
+      selectedServices.forEach((service, index) => {
+        messageText += createServiceItem(service, index) + "\n\n";
       });
 
-      let count = 0;
-      Object.entries(matchesByCategory).forEach(([category, catServices]) => {
-        messageText += `📂 *${category.toUpperCase()}*\n\n`;
-        catServices.forEach(s => { messageText += createServiceItem(s, count) + "\n\n"; count++; });
-      });
+      messageText += `━━━━━━━━━━━━━━━━━━━━\n`;
+      messageText += `📞 *Support:* wa.me/94722136082\n`;
+      messageText += `🌐 *Website:* https://makemetrend.online\n`;
+      messageText += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      messageText += `_💡 Reply with .order to place an order_`;
 
-      messageText += `📞 *Support:* wa.me/94722136082\n🌐 *Website:* https://makemetrend.online`;
-
+      // Send response with image
       await conn.sendMessage(from, {
         image: { url: serviceLogo },
         caption: messageText,
-        contextInfo: { forwardingScore: 999, isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: channelJid, newsletterName: channelName, serverMessageId: -1 } }
+        contextInfo: { 
+          forwardingScore: 999, 
+          isForwarded: true, 
+          forwardedNewsletterMessageInfo: { 
+            newsletterJid: channelJid, 
+            newsletterName: channelName, 
+            serverMessageId: -1 
+          } 
+        }
       }, { quoted: mek });
 
-      console.log(`✅ [MMT BUSINESS HUB] Sent ${matches.length} service matches to ${from}`);
+      console.log(`✅ [MMT BUSINESS HUB] Sent ${selectedServices.length} service matches to ${from}`);
+      
     } catch (err) {
       console.error("❌ [MMT BUSINESS HUB] AI plugin error:", err);
     }
