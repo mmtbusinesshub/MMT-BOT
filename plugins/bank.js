@@ -1,40 +1,29 @@
+const { sendButtons, sendInteractiveMessage } = require('gifted-btns');
+
 const channelJid = '120363423526129509@newsletter'; 
 const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡'; 
 const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
 
-const pendingBankRequests = new Map();
-
 const bankDetails = {
   'hnb': {
     name: 'HNB BANK TRANSFER',
+    shortName: 'HNB',
     details: `*HNB Bank - Nittambuwa Branch*
 *Name: M I M IFLAJ*
 *Account Number: 250020285400*`,
-    emoji: '🎉'
+    emoji: '🏦',
+    icon: '🇱🇰'
   },
   'boc': {
     name: 'BOC BANK TRANSFER', 
+    shortName: 'BOC',
     details: `*BOC Bank - Nittambuwa Branch*
 *Account Number: 0091759510*
 *Name: Samsul nisa*`,
-    emoji: '🎉'
-  },
-  'hnb bank': {
-    name: 'HNB BANK TRANSFER',
-    details: `*HNB Bank - Nittambuwa Branch*
-*Name: M I M IFLAJ*
-*Account Number: 250020285400*`,
-    emoji: '🎉'
-  },
-  'boc bank': {
-    name: 'BOC BANK TRANSFER',
-    details: `*BOC Bank - Nittambuwa Branch*
-*Account Number: 0091759510*
-*Name: Samsul nisa*`,
-    emoji: '🎉'
+    emoji: '🏦',
+    icon: '🇱🇰'
   }
 };
-
 
 const bankKeywords = [
   'bank', 'payment', 'transfer', 'deposit', 
@@ -61,14 +50,8 @@ module.exports = {
       
       const msg = text.toLowerCase();
       const from = key.remoteJid;
-      const sender = key.participant || from;
 
       console.log("🏦 [MMT BANK] Message received:", msg);
-
-      if (pendingBankRequests.has(sender)) {
-        await handleBankReply(conn, mek, text, from, sender);
-        return;
-      }
 
       const isBankQuery = bankKeywords.some(keyword => msg.includes(keyword));
       
@@ -86,31 +69,38 @@ module.exports = {
         console.log("⚠️ [MMT BANK] Could not react to message:", reactError.message);
       }
 
-      const questionText = `🏦 *BANK DETAILS REQUEST*\n────────────────────\n🇱🇰 *HNB Bank* - Type "HNB"\n🇱🇰 *BOC Bank* - Type "BOC"\n────────────────────\n⭕ *Simply reply with the bank name to get complete details.*\n\n⭕ *සම්පූර්න බැන්කු විස්තර ලබාගන්න බැන්කුවේ නම මේ මැසේජ් එකට රිප්ලයි කරන්න.*\n\n⭕ *முழுமையான வங்கி விவரங்களைப் பெற, வங்கியின் பெயருடன் இந்தச் செய்திக்குப் பதிலளிக்கவும்.*
-`;
-
-      await conn.sendMessage(from, {
+      // Send bank selection with buttons
+      await sendInteractiveMessage(conn, from, {
         image: { url: serviceLogo },
-        caption: questionText,
-        contextInfo: {
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: channelJid,
-            newsletterName: channelName,
-            serverMessageId: -1
+        title: "🏦 BANK DETAILS",
+        text: "Please select a bank to receive payment details:\n\n🇱🇰 *HNB Bank* - HNB\n🇱🇰 *BOC Bank* - BOC",
+        footer: "Choose your bank below:",
+        interactiveButtons: [
+          {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({
+              display_text: '🇱🇰 HNB Bank',
+              id: 'bank_hnb'
+            })
+          },
+          {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({
+              display_text: '🇱🇰 BOC Bank',
+              id: 'bank_boc'
+            })
+          },
+          {
+            name: 'cta_url',
+            buttonParamsJson: JSON.stringify({
+              display_text: '📞 Contact Support',
+              url: 'https://wa.me/94722136082'
+            })
           }
-        }
+        ]
       }, { quoted: mek });
 
-      pendingBankRequests.set(sender, {
-        timestamp: Date.now(),
-        originalMessage: text
-      });
-
-      console.log(`🏦 [MMT BANK] Asked bank selection from ${sender}`);
-
-      cleanupPendingRequests();
+      console.log(`🏦 [MMT BANK] Sent bank selection buttons`);
 
     } catch (err) {
       console.error("❌ [MMT BANK] Plugin error:", err);
@@ -118,80 +108,85 @@ module.exports = {
   },
 };
 
-async function handleBankReply(conn, mek, text, from, sender) {
-  try {
-    const userReply = text.toLowerCase().trim();
-    
-    pendingBankRequests.delete(sender);
-
-    await conn.sendMessage(from, {
-      react: {
-        text: "✅",
-        key: mek.key,
-      }
-    });
-
-    let selectedBank = null;
-    
-    if (userReply.includes('hnb')) {
-      selectedBank = bankDetails['hnb'];
-    } else if (userReply.includes('boc')) {
-      selectedBank = bankDetails['boc'];
-    }
-
-    if (selectedBank) {
-      const bankMessage = `🏦 *PAYMENT DETAILS*\n────────────────────\n${selectedBank.emoji} *${selectedBank.name}*\n────────────────────\n${selectedBank.details}\n────────────────────\n📞 *Support:* wa.me/94722136082`;
-
-      await conn.sendMessage(from, {
-        image: { url: serviceLogo },
-        caption: bankMessage,
-        contextInfo: {
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: channelJid,
-            newsletterName: channelName,
-            serverMessageId: -1
+// Handle button responses
+if (conn.ev) {
+  conn.ev.on('messages.upsert', async ({ messages }) => {
+    for (const msg of messages) {
+      if (!msg.message) continue;
+      
+      const key = msg.key;
+      const from = key.remoteJid;
+      
+      // Check for button responses
+      const buttonResponse = 
+        msg.message.buttonsResponseMessage ||
+        msg.message.interactiveResponseMessage ||
+        msg.message.listResponseMessage;
+      
+      if (buttonResponse) {
+        let selectedId = '';
+        
+        // Extract selected button ID based on response type
+        if (msg.message.buttonsResponseMessage) {
+          selectedId = msg.message.buttonsResponseMessage.selectedButtonId;
+        } else if (msg.message.interactiveResponseMessage) {
+          selectedId = msg.message.interactiveResponseMessage.nativeFlowResponseMessage?.paramsJson;
+          if (selectedId) {
+            try {
+              const parsed = JSON.parse(selectedId);
+              selectedId = parsed.id || parsed.selectedId || selectedId;
+            } catch {
+              // Keep as is
+            }
           }
+        } else if (msg.message.listResponseMessage) {
+          selectedId = msg.message.listResponseMessage.singleSelectReply?.selectedRowId;
         }
-      }, { quoted: mek });
+        
+        console.log("🏦 [MMT BANK] Button selected:", selectedId);
+        
+        // Handle bank selection
+        if (selectedId === 'bank_hnb') {
+          const selectedBank = bankDetails['hnb'];
+          const bankMessage = `🏦 *PAYMENT DETAILS*\n────────────────────\n${selectedBank.icon} *${selectedBank.name}*\n────────────────────\n${selectedBank.details}\n────────────────────\n📞 *Support:* wa.me/94722136082`;
 
-      console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details to ${sender}`);
+          await conn.sendMessage(from, {
+            image: { url: serviceLogo },
+            caption: bankMessage,
+            contextInfo: {
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: channelJid,
+                newsletterName: channelName,
+                serverMessageId: -1
+              }
+            }
+          });
+          
+          console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
+          
+        } else if (selectedId === 'bank_boc') {
+          const selectedBank = bankDetails['boc'];
+          const bankMessage = `🏦 *PAYMENT DETAILS*\n────────────────────\n${selectedBank.icon} *${selectedBank.name}*\n────────────────────\n${selectedBank.details}\n────────────────────\n📞 *Support:* wa.me/94722136082`;
 
-    } else {
-      const errorMessage = `❌ *Invalid Bank Selection*\n────────────────────\n\nPlease choose one of the following:\n\n🇱🇰 *HNB Bank* - Reply "HNB"\n🇱🇰 *BOC Bank* - Reply "BOC".`;
-
-      await conn.sendMessage(from, {
-        text: errorMessage
-      }, { quoted: mek });
-
-      pendingBankRequests.set(sender, {
-        timestamp: Date.now(),
-        originalMessage: text
-      });
+          await conn.sendMessage(from, {
+            image: { url: serviceLogo },
+            caption: bankMessage,
+            contextInfo: {
+              forwardingScore: 999,
+              isForwarded: true,
+              forwardedNewsletterMessageInfo: {
+                newsletterJid: channelJid,
+                newsletterName: channelName,
+                serverMessageId: -1
+              }
+            }
+          });
+          
+          console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
+        }
+      }
     }
-
-  } catch (err) {
-    console.error("❌ [MMT BANK] Reply handler error:", err);
-    
-    pendingBankRequests.delete(sender);
-    
-    await conn.sendMessage(from, {
-      text: "❌ Sorry, there was an error processing your request. Please try again."
-    }, { quoted: mek });
-  }
+  });
 }
-
-function cleanupPendingRequests() {
-  const now = Date.now();
-  const fiveMinutes = 5 * 60 * 1000;
-  
-  for (const [sender, data] of pendingBankRequests.entries()) {
-    if (now - data.timestamp > fiveMinutes) {
-      pendingBankRequests.delete(sender);
-      console.log(`🧹 [MMT BANK] Cleaned up old request from ${sender}`);
-    }
-  }
-}
-
-setInterval(cleanupPendingRequests, 10 * 60 * 1000);
