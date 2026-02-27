@@ -734,62 +734,189 @@ function createServiceItem(service, index) {
 function formatServiceType(service) {
     if (!service) return 'SERVICES';
     
-    const serviceMap = {
-        followers: 'FOLLOWERS',
-        likes: 'LIKES',
-        views: 'VIEWS',
-        comments: 'COMMENTS',
-        shares: 'SHARES',
-        saves: 'SAVES',
-        story: 'STORY',
-        live: 'LIVE',
-        subscribers: 'SUBSCRIBERS',
-        channel: 'CHANNEL',
-        reactions: 'REACTIONS',
-        watchtime: 'WATCH TIME',
-        group: 'GROUP',
-        poll: 'POLL',
-        video: 'VIDEO',
-        post: 'POST',
-        page: 'PAGE',
-        reel: 'REEL',
-        videoviews: 'VIDEO VIEWS',
-        storyviews: 'STORY VIEWS',
-        storyreactions: 'STORY REACTIONS',
-        storycomments: 'STORY COMMENTS',
-        storypoll: 'STORY POLL',
-        pagelikes: 'PAGE LIKES',
-        postlikes: 'POST LIKES',
-        postreactions: 'POST REACTIONS',
-        groupmembers: 'GROUP MEMBERS',
-        channelmembers: 'CHANNEL MEMBERS',
-        customcomments: 'CUSTOM COMMENTS',
-        randomcomments: 'RANDOM COMMENTS',
-        emojicomments: 'EMOJI COMMENTS',
-        livestreamviews: 'LIVE STREAM VIEWS',
-        watchhours: 'WATCH HOURS',
-        adwords: 'ADWORDS VIEWS',
-        ctrviews: 'CTR VIEWS',
-        socialshares: 'SOCIAL SHARES',
-        impressions: 'IMPRESSIONS',
-        reach: 'REACH',
-        discover: 'DISCOVER',
-        repost: 'REPOST',
-        reposts: 'REPOSTS',
-        videosave: 'VIDEO SAVE',
-        videoshare: 'VIDEO SHARE',
-        emojireactions: 'EMOJI REACTIONS',
-        channelmember: 'CHANNEL MEMBER',
-        profilevisit: 'PROFILE VISIT',
-        watchtimeviews: 'WATCH TIME VIEWS',
-        autorefill: 'AUTO REFILL',
-        norefill: 'NO REFILL',
-        instant: 'INSTANT',
-        fast: 'FAST',
-        cancel: 'CANCEL',
-        drop: 'DROP',
-        retention: 'RETENTION'
-    };
+const serviceMap = {
+    // Core Services
+    followers: 'FOLLOWERS',
+    likes: 'LIKES',
+    views: 'VIEWS',
+    comments: 'COMMENTS',
+    shares: 'SHARES',
+    saves: 'SAVES',
+    
+    // Content Types
+    story: 'STORY',
+    live: 'LIVE',
+    video: 'VIDEO',
+    post: 'POST',
+    page: 'PAGE',
+    reel: 'REEL',
+    channel: 'CHANNEL',
+    group: 'GROUP',
+    poll: 'POLL',
+    
+    // Platform Specific - General
+    subscribers: 'SUBSCRIBERS',
+    reactions: 'REACTIONS',
+    watchtime: 'WATCH TIME',
+    impressions: 'IMPRESSIONS',
+    reach: 'REACH',
+    discover: 'DISCOVER',
+    repost: 'REPOST',
+    
+    // Video Related
+    videoviews: 'VIDEO VIEWS',
+    videosave: 'VIDEO SAVE',
+    videoshare: 'VIDEO SHARE',
+    livestreamviews: 'LIVE STREAM VIEWS',
+    watchhours: 'WATCH HOURS',
+    watchtimeviews: 'WATCH TIME VIEWS',
+    retention: 'RETENTION',
+    
+    // Story Related
+    storyviews: 'STORY VIEWS',
+    storyreactions: 'STORY REACTIONS',
+    storycomments: 'STORY COMMENTS',
+    storypoll: 'STORY POLL',
+    
+    // Post & Page Related
+    pagelikes: 'PAGE LIKES',
+    postlikes: 'POST LIKES',
+    postreactions: 'POST REACTIONS',
+    
+    // Group Related
+    groupmembers: 'GROUP MEMBERS',
+    
+    // Comment Related
+    customcomments: 'CUSTOM COMMENTS',
+    randomcomments: 'RANDOM COMMENTS',
+    emojicomments: 'EMOJI COMMENTS',
+    
+    // WhatsApp Specific - Channel
+    channelmembers: 'CHANNEL MEMBERS',
+    channelmember: 'CHANNEL MEMBER',
+    channelreactions: 'CHANNEL REACTIONS',
+    channelposts: 'CHANNEL POSTS',
+    channelviews: 'CHANNEL VIEWS',
+    
+    // WhatsApp Specific - Emoji Reactions (Detailed)
+    emojireactions: 'EMOJI REACTIONS',
+    emojireaction: 'EMOJI REACTION',
+    postemojireactions: 'POST EMOJI REACTIONS',
+    channelemojireactions: 'CHANNEL EMOJI REACTIONS',
+    
+    // WhatsApp Specific - Individual Emojis
+    likeemoji: '👍 EMOJI REACTIONS',
+    heartemoji: '❤️ EMOJI REACTIONS',
+    laughingemoji: '😂 EMOJI REACTIONS',
+    surprisedemoji: '😲 EMOJI REACTIONS',
+    sademoji: '😥 EMOJI REACTIONS',
+    prayingemoji: '🙏 EMOJI REACTIONS',
+    clapemoji: '👏 EMOJI REACTIONS',
+    fireemoji: '🔥 EMOJI REACTIONS',
+    trophyemoji: '🏆 EMOJI REACTIONS',
+    partyemoji: '🎉 EMOJI REACTIONS',
+    
+    // WhatsApp Specific - Mixed Emojis
+    mixedemojireactions: 'MIXED EMOJI REACTIONS',
+    randomemojireactions: 'RANDOM EMOJI REACTIONS',
+    
+    // WhatsApp Specific - Quality & Speed
+    fastreactions: 'FAST EMOJI REACTIONS',
+    instantreactions: 'INSTANT EMOJI REACTIONS',
+    cheapertiemojireactions: 'CHEAP EMOJI REACTIONS',
+    slowserverreactions: 'SLOW SERVER EMOJI REACTIONS',
+    
+    // YouTube Specific
+    adwords: 'ADWORDS VIEWS',
+    ctrviews: 'CTR VIEWS',
+    socialshares: 'SOCIAL SHARES',
+    hypes: 'HYPE BOOST',
+    
+    // Instagram Specific
+    profilevisit: 'PROFILE VISIT',
+    instagramchannel: 'INSTAGRAM CHANNEL',
+    
+    // Facebook Specific
+    watchtimeviews: 'WATCH TIME VIEWS',
+    
+    // TikTok Specific
+    reposts: 'REPOSTS',
+    
+    // Package Types
+    package: 'PACKAGE',
+    growthpackage: 'GROWTH PACKAGE',
+    premiumpackage: 'PREMIUM PACKAGE',
+    
+    // Quality Indicators
+    real: 'REAL ACCOUNTS',
+    hq: 'HIGH QUALITY',
+    lq: 'LOW QUALITY',
+    active: 'ACTIVE ACCOUNTS',
+    
+    // Refill Options
+    autorefill: 'AUTO REFILL',
+    norefill: 'NO REFILL',
+    refill: 'REFILL',
+    
+    // Speed Indicators
+    instant: 'INSTANT',
+    fast: 'FAST',
+    ultrafast: 'ULTRA FAST',
+    superfast: 'SUPER FAST',
+    
+    // Cancel Options
+    cancel: 'CANCEL ENABLE',
+    cancelenable: 'CANCEL ENABLE',
+    
+    // Drop Rate
+    drop: 'DROP',
+    nondrop: 'NON DROP',
+    lowdrop: 'LOW DROP',
+    highdrop: 'HIGH DROP',
+    dropzero: '0% DROP',
+    
+    // Regional/Targeted
+    targeted: 'TARGETED',
+    global: 'GLOBAL',
+    worldwide: 'WORLDWIDE',
+    
+    // Country Specific
+    usa: 'USA',
+    india: 'INDIA',
+    brazil: 'BRAZIL',
+    turkey: 'TURKEY',
+    arab: 'ARAB',
+    europe: 'EUROPE',
+    asia: 'ASIA',
+    latinamerica: 'LATIN AMERICA',
+    uae: 'UAE',
+    pakistan: 'PAKISTAN',
+    philippines: 'PHILIPPINES',
+    vietnam: 'VIETNAM',
+    thailand: 'THAILAND',
+    nigeria: 'NIGERIA',
+    indonesia: 'INDONESIA',
+    saudi: 'SAUDI ARABIA',
+    egypt: 'EGYPT',
+    russia: 'RUSSIA',
+    germany: 'GERMANY',
+    france: 'FRANCE',
+    uk: 'UNITED KINGDOM',
+    canada: 'CANADA',
+    japan: 'JAPAN',
+    korea: 'SOUTH KOREA',
+    
+    // Time Duration
+    minutes: 'MINUTES',
+    hours: 'HOURS',
+    days: 'DAYS',
+    lifetime: 'LIFETIME',
+    
+    // Max Limits
+    unlimited: 'UNLIMITED',
+    max: 'MAX',
+    min: 'MIN'
+};
     
     return serviceMap[service] || service.toUpperCase();
 }
@@ -822,7 +949,7 @@ module.exports = {
 
             await conn.sendPresenceUpdate('composing', from);
             try {
-                await conn.sendMessage(from, { react: { text: "🔍", key: mek.key } });
+                await conn.sendMessage(from, { react: { text: "💫", key: mek.key } });
             } catch {}
 
             // Fetch services
@@ -902,7 +1029,8 @@ module.exports = {
             }
 
             // Build response with FULL service names
-            let messageText = "╭━〔 🎯 *MMT SERVICES* 〕━╮\n\n";
+            let messageText = "╭━━〔 🎯 *MMT SERVICES* 〕━━╮\n";
+            let messageText = "━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
 
             const platformEmoji = {
                 tiktok: '🎵', instagram: '📷', facebook: '👤',
