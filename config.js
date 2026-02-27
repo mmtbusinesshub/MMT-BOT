@@ -14,7 +14,7 @@ const defaultConfig = {
   AUTO_STATUS_REACT: "true",
   AUTO_STATUS_REPLY: "true",
   AUTO_STATUS_SEEN: "true",
-  MODE: "public", // 'private', 'public'
+  MODE: "inbox", // 'private', 'public'
   MMT_API_KEY: "529e5c3a2253bf93a5d9c2e104a3b498",
 };
 
