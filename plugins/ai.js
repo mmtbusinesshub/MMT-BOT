@@ -166,9 +166,35 @@ function detectService(query) {
 }
 
 /**
- * CATEGORY-BASED FILTERING
- * This uses the category field from services.json to match user queries
- * Each service belongs to a category like "Instagram Likes [ Accounts with Profile Photos ]"
+ * Check if service is primarily about the requested type
+ * This ensures the service name starts with the platform + service type
+ */
+function isPrimaryService(service, platform, serviceType) {
+    const name = normalize(service.name || "");
+    const platformKeywords = PLATFORM_KEYWORDS[platform] || [platform];
+    const serviceKeywords = SERVICE_KEYWORDS[serviceType] || [serviceType];
+    
+    // Get the first 5 words of the service name
+    const words = name.split(' ').slice(0, 5);
+    const nameStart = words.join(' ');
+    
+    // Check if platform appears in first 2 words
+    const hasPlatformEarly = platformKeywords.some(kw => 
+        words.slice(0, 2).some(word => word.includes(kw) || kw.includes(word))
+    );
+    
+    if (!hasPlatformEarly) return false;
+    
+    // Check if service type appears in first 4 words
+    const hasServiceEarly = serviceKeywords.some(kw => 
+        words.slice(0, 4).some(word => word.includes(kw) || kw.includes(word))
+    );
+    
+    return hasServiceEarly;
+}
+
+/**
+ * CATEGORY-BASED FILTERING with primary service check
  */
 function filterByCategory(services, platform, service) {
     if (!services || !services.length) return [];
@@ -187,17 +213,17 @@ function filterByCategory(services, platform, service) {
         serviceKeywords = [serviceLower];
     }
     
-    return services.filter(svc => {
+    // First pass: filter by category
+    let categoryMatches = services.filter(svc => {
         const category = normalize(svc.category || "");
-        const name = normalize(svc.name || "");
         
-        // Platform must match in category (primary filter)
+        // Platform must match in category
         if (platformKeywords) {
             const hasPlatformInCategory = platformKeywords.some(kw => category.includes(kw));
             if (!hasPlatformInCategory) return false;
         }
         
-        // Service must match in category (secondary filter)
+        // Service must match in category
         if (serviceKeywords.length > 0) {
             const hasServiceInCategory = serviceKeywords.some(kw => category.includes(kw));
             if (!hasServiceInCategory) return false;
@@ -205,6 +231,50 @@ function filterByCategory(services, platform, service) {
         
         return true;
     });
+    
+    // Second pass: ensure services are primary matches
+    if (platformLower && serviceLower) {
+        categoryMatches = categoryMatches.filter(svc => 
+            isPrimaryService(svc, platformLower, serviceLower)
+        );
+    }
+    
+    return categoryMatches;
+}
+
+/**
+ * Get 3 cheapest + 2 most expensive from PRIMARY services only
+ */
+function getPriceExtremes(services, platform, service) {
+    if (!services.length) return [];
+    
+    // Further filter to ensure we only have primary services for the expensive ones
+    const primaryServices = services.filter(svc => 
+        isPrimaryService(svc, platform, service)
+    );
+    
+    if (primaryServices.length <= 5) return primaryServices;
+    
+    // Sort by price ascending
+    const sorted = [...primaryServices].sort((a, b) => {
+        const priceA = extractNumericPrice(a);
+        const priceB = extractNumericPrice(b);
+        if (isNaN(priceA) && isNaN(priceB)) return 0;
+        if (isNaN(priceA)) return 1;
+        if (isNaN(priceB)) return -1;
+        return priceA - priceB;
+    });
+    
+    const cheapest = sorted.slice(0, 3);
+    const mostExpensive = sorted.slice(-2);
+    
+    // Combine and deduplicate
+    const combined = [...cheapest, ...mostExpensive];
+    const unique = combined.filter((svc, idx, self) =>
+        idx === self.findIndex(s => s.service_id === svc.service_id)
+    );
+    
+    return unique;
 }
 
 /**
@@ -225,7 +295,7 @@ function filterByName(services, platform, service) {
         serviceKeywords = [serviceLower];
     }
     
-    return services.filter(svc => {
+    let nameMatches = services.filter(svc => {
         const name = normalize(svc.name || "");
         
         // Platform must match in name
@@ -242,35 +312,15 @@ function filterByName(services, platform, service) {
         
         return true;
     });
-}
-
-/**
- * Get 3 cheapest + 2 most expensive services
- */
-function getPriceExtremes(services) {
-    if (!services.length) return [];
-    if (services.length <= 5) return services;
     
-    // Sort by price ascending
-    const sorted = [...services].sort((a, b) => {
-        const priceA = extractNumericPrice(a);
-        const priceB = extractNumericPrice(b);
-        if (isNaN(priceA) && isNaN(priceB)) return 0;
-        if (isNaN(priceA)) return 1;
-        if (isNaN(priceB)) return -1;
-        return priceA - priceB;
-    });
+    // Apply primary service check
+    if (platformLower && serviceLower) {
+        nameMatches = nameMatches.filter(svc => 
+            isPrimaryService(svc, platformLower, serviceLower)
+        );
+    }
     
-    const cheapest = sorted.slice(0, 3);
-    const mostExpensive = sorted.slice(-2);
-    
-    // Combine and deduplicate
-    const combined = [...cheapest, ...mostExpensive];
-    const unique = combined.filter((svc, idx, self) =>
-        idx === self.findIndex(s => s.service_id === svc.service_id)
-    );
-    
-    return unique;
+    return nameMatches;
 }
 
 function createServiceItem(service, index) {
@@ -341,62 +391,79 @@ module.exports = {
             console.log('🎯 Service  :', service || '❌ Not detected');
             console.log('===============================================\n');
 
+            if (!platform || !service) {
+                // If missing platform or service, return a helpful message
+                let helpText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
+                helpText += "❌ *Please specify both platform and service*\n\n";
+                helpText += "📝 *Examples:*\n";
+                helpText += "• instagram likes\n";
+                helpText += "• tiktok followers\n";
+                helpText += "• facebook page likes\n";
+                helpText += "• youtube views\n";
+                helpText += "• whatsapp channel\n\n";
+                helpText += "📞 *Support:* wa.me/94722136082\n";
+                helpText += "🌐 *Website:* https://makemetrend.online\n";
+                helpText += "╰━━━━━━━━━━━━━━━━━━━━━━━━╯";
+                
+                await conn.sendMessage(from, { text: helpText }, { quoted: mek });
+                return;
+            }
+
             // PRIMARY METHOD: Filter by category (most accurate)
             let filtered = filterByCategory(services, platform, service);
             
-            console.log(`🔍 Category filter: found ${filtered.length} services`);
+            console.log(`🔍 Category filter: found ${filtered.length} primary ${service} services`);
 
             // FALLBACK METHOD: If no category matches, try filtering by name
-            if (filtered.length === 0 && platform && service) {
+            if (filtered.length === 0) {
                 console.log(`ℹ️ No category matches for ${platform} ${service}, trying name filter`);
                 filtered = filterByName(services, platform, service);
-                console.log(`🔍 Name filter: found ${filtered.length} services`);
+                console.log(`🔍 Name filter: found ${filtered.length} primary ${service} services`);
             }
-            
-            // If still no results, try platform only
-            if (filtered.length === 0 && platform) {
-                console.log(`ℹ️ Showing all ${platform} services`);
+
+            // Final fallback - show platform services
+            if (filtered.length === 0) {
+                console.log(`ℹ️ No primary ${service} services found, showing all ${platform} services`);
                 filtered = filterByCategory(services, platform, null);
                 if (filtered.length === 0) {
                     filtered = filterByName(services, platform, null);
                 }
             }
 
-            // Final fallback - show some popular services
-            if (filtered.length === 0) {
-                console.log('ℹ️ No matches found, showing popular services');
-                filtered = services.slice(0, 15);
-            }
+            // Get 3 cheapest + 2 most expensive from PRIMARY services only
+            const selectedServices = getPriceExtremes(filtered, platform, service);
 
-            // Get 3 cheapest + 2 most expensive
-            const selectedServices = getPriceExtremes(filtered);
+            if (selectedServices.length === 0) {
+                await conn.sendMessage(from, { 
+                    text: `❌ No ${platform} ${service} services found. Please try a different combination.` 
+                }, { quoted: mek });
+                return;
+            }
 
             // Build response
             let messageText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
 
-            if (platform) {
-                const platformEmoji = {
-                    tiktok: '🎵', instagram: '📷', facebook: '👤',
-                    youtube: '▶️', whatsapp: '💬'
-                }[platform] || '📱';
-                messageText += `${platformEmoji} *Platform:* ${platform.toUpperCase()}\n`;
-            }
+            const platformEmoji = {
+                tiktok: '🎵', instagram: '📷', facebook: '👤',
+                youtube: '▶️', whatsapp: '💬'
+            }[platform] || '📱';
             
-            if (service) {
-                const serviceEmoji = {
-                    followers: '👥', subscribers: '📺', likes: '❤️',
-                    views: '👀', comments: '💬', shares: '🔄',
-                    saves: '🔖', story: '📖', live: '🔴',
-                    channel: '📢', reactions: '😊', watchtime: '⏱️',
-                    group: '👥', poll: '📊', video: '🎬',
-                    post: '📝', page: '📄'
-                }[service] || '🎯';
-                messageText += `${serviceEmoji} *Service:* ${service.toUpperCase()}\n`;
-            }
+            const serviceEmoji = {
+                followers: '👥', subscribers: '📺', likes: '❤️',
+                views: '👀', comments: '💬', shares: '🔄',
+                saves: '🔖', story: '📖', live: '🔴',
+                channel: '📢', reactions: '😊', watchtime: '⏱️',
+                group: '👥', poll: '📊', video: '🎬',
+                post: '📝', page: '📄'
+            }[service] || '🎯';
             
-            // Show filter method used
-            if (filtered.length > 0) {
-                messageText += `📁 *Category:* ${filtered[0].category.split('[')[0].trim()}\n`;
+            messageText += `${platformEmoji} *Platform:* ${platform.toUpperCase()}\n`;
+            messageText += `${serviceEmoji} *Service:* ${service.toUpperCase()}\n`;
+            
+            // Show category if available
+            if (filtered.length > 0 && filtered[0].category) {
+                const categoryName = filtered[0].category.split('[')[0].trim();
+                messageText += `📁 *Category:* ${categoryName}\n`;
             }
             
             messageText += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
@@ -404,13 +471,6 @@ module.exports = {
             selectedServices.forEach((svc, idx) => {
                 messageText += createServiceItem(svc, idx) + "\n\n";
             });
-
-            // Add helpful tip
-            if (platform && !service) {
-                messageText += `💡 *Tip:* Be more specific! Try "${platform} likes" or "${platform} views"\n\n`;
-            } else if (!platform && service) {
-                messageText += `💡 *Tip:* Add a platform like "instagram ${service}" for better results\n\n`;
-            }
 
             messageText += `📞 *Support:* wa.me/94722136082\n`;
             messageText += `🌐 *Website:* https://makemetrend.online\n`;
@@ -430,7 +490,7 @@ module.exports = {
                 }
             }, { quoted: mek });
 
-            console.log(`✅ [AI PLUGIN] Sent ${selectedServices.length} services to ${from}`);
+            console.log(`✅ [AI PLUGIN] Sent ${selectedServices.length} ${platform} ${service} services to ${from}`);
             
         } catch (err) {
             console.error("❌ [AI PLUGIN] Error:", err);
