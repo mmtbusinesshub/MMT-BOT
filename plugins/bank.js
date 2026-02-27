@@ -114,94 +114,103 @@ module.exports = {
       // This handles the button responses immediately after sending
       
       // Wait for response (this is a one-time listener)
-      const responseHandler = async (responseMsg) => {
-        const responseKey = responseMsg.key;
-        if (responseKey.remoteJid !== from) return; // Different chat
-        
-        const responseContent = responseMsg.message;
-        if (!responseContent) return;
-        
-        let selectedId = '';
-        
-        // Check for button response
-        if (responseContent.buttonsResponseMessage) {
-          selectedId = responseContent.buttonsResponseMessage.selectedButtonId;
-        } else if (responseContent.interactiveResponseMessage) {
-          const nativeResponse = responseContent.interactiveResponseMessage.nativeFlowResponseMessage;
-          if (nativeResponse?.paramsJson) {
-            try {
-              const parsed = JSON.parse(nativeResponse.paramsJson);
-              selectedId = parsed.id || '';
-            } catch (e) {}
+      const responseHandler = async ({ messages }) => {
+        try {
+          // Loop through all messages in the upsert
+          for (const responseMsg of messages) {
+            // Check if message and key exist
+            if (!responseMsg?.message || !responseMsg?.key) continue;
+            
+            const responseKey = responseMsg.key;
+            if (responseKey.remoteJid !== from) continue; // Different chat
+            
+            let selectedId = '';
+            
+            // Check for button response
+            if (responseMsg.message.buttonsResponseMessage) {
+              selectedId = responseMsg.message.buttonsResponseMessage.selectedButtonId;
+            } else if (responseMsg.message.interactiveResponseMessage) {
+              const nativeResponse = responseMsg.message.interactiveResponseMessage.nativeFlowResponseMessage;
+              if (nativeResponse?.paramsJson) {
+                try {
+                  const parsed = JSON.parse(nativeResponse.paramsJson);
+                  selectedId = parsed.id || '';
+                } catch (e) {}
+              }
+            }
+            
+            if (!selectedId) continue;
+            
+            console.log("🏦 [MMT BANK] Button selected:", selectedId);
+            
+            // Handle bank selection
+            if (selectedId === 'bank_hnb') {
+              const selectedBank = bankDetails['hnb'];
+              const bankMessage = `🏦 *PAYMENT DETAILS*
+────────────────────
+${selectedBank.icon} *${selectedBank.name}*
+────────────────────
+${selectedBank.details}
+────────────────────
+📞 *Support:* wa.me/94722136082`;
+
+              await conn.sendMessage(from, {
+                image: { url: serviceLogo },
+                caption: bankMessage,
+                contextInfo: {
+                  forwardingScore: 999,
+                  isForwarded: true,
+                  forwardedNewsletterMessageInfo: {
+                    newsletterJid: channelJid,
+                    newsletterName: channelName,
+                    serverMessageId: -1
+                  }
+                }
+              });
+              
+              console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
+              
+              // Remove listener after handling
+              conn.ev.off('messages.upsert', responseHandler);
+              break; // Exit loop after handling
+              
+            } else if (selectedId === 'bank_boc') {
+              const selectedBank = bankDetails['boc'];
+              const bankMessage = `🏦 *PAYMENT DETAILS*
+────────────────────
+${selectedBank.icon} *${selectedBank.name}*
+────────────────────
+${selectedBank.details}
+────────────────────
+📞 *Support:* wa.me/94722136082`;
+
+              await conn.sendMessage(from, {
+                image: { url: serviceLogo },
+                caption: bankMessage,
+                contextInfo: {
+                  forwardingScore: 999,
+                  isForwarded: true,
+                  forwardedNewsletterMessageInfo: {
+                    newsletterJid: channelJid,
+                    newsletterName: channelName,
+                    serverMessageId: -1
+                  }
+                }
+              });
+              
+              console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
+              
+              // Remove listener after handling
+              conn.ev.off('messages.upsert', responseHandler);
+              break; // Exit loop after handling
+            }
           }
-        }
-        
-        if (!selectedId) return;
-        
-        console.log("🏦 [MMT BANK] Button selected:", selectedId);
-        
-        // Handle bank selection
-        if (selectedId === 'bank_hnb') {
-          const selectedBank = bankDetails['hnb'];
-          const bankMessage = `🏦 *PAYMENT DETAILS*
-────────────────────
-${selectedBank.icon} *${selectedBank.name}*
-────────────────────
-${selectedBank.details}
-────────────────────
-📞 *Support:* wa.me/94722136082`;
-
-          await conn.sendMessage(from, {
-            image: { url: serviceLogo },
-            caption: bankMessage,
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: channelJid,
-                newsletterName: channelName,
-                serverMessageId: -1
-              }
-            }
-          });
-          
-          console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
-          
-          // Remove listener after handling
-          conn.ev.off('messages.upsert', responseHandler);
-          
-        } else if (selectedId === 'bank_boc') {
-          const selectedBank = bankDetails['boc'];
-          const bankMessage = `🏦 *PAYMENT DETAILS*
-────────────────────
-${selectedBank.icon} *${selectedBank.name}*
-────────────────────
-${selectedBank.details}
-────────────────────
-📞 *Support:* wa.me/94722136082`;
-
-          await conn.sendMessage(from, {
-            image: { url: serviceLogo },
-            caption: bankMessage,
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: channelJid,
-                newsletterName: channelName,
-                serverMessageId: -1
-              }
-            }
-          });
-          
-          console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
-          
-          // Remove listener after handling
-          conn.ev.off('messages.upsert', responseHandler);
+        } catch (handlerError) {
+          console.error("❌ [MMT BANK] Response handler error:", handlerError);
         }
       };
       
-      // Add one-time listener for button response
+      // Add listener for button response
       conn.ev.on('messages.upsert', responseHandler);
       
       // Auto-remove listener after 5 minutes (timeout)
