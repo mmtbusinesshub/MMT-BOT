@@ -902,7 +902,7 @@ module.exports = {
             }
 
             // Build response with FULL service names
-            let messageText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
+            let messageText = "╭━〔 🎯 *MMT SERVICES* 〕━╮\n\n";
 
             const platformEmoji = {
                 tiktok: '🎵', instagram: '📷', facebook: '👤',
@@ -945,7 +945,7 @@ module.exports = {
             messageText += `💡 *Showing:* 3 cheapest + 2 most expensive ${platform} ${service} services\n\n`;
             messageText += `📞 *Support:* wa.me/94722136082\n`;
             messageText += `🌐 *Website:* https://makemetrend.online\n`;
-            messageText += `╰━━━━━━━━━━━━━━━━━━━━━━━━╯`;
+            messageText += `╰━━━━━━━━━━━━━━━━━━━━━━╯`;
 
             await conn.sendMessage(from, {
                 image: { url: serviceLogo },
