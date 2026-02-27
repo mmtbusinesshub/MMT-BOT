@@ -5,22 +5,18 @@ const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃�
 const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
 
 const bankDetails = {
-  'hnb': {
+  hnb: {
     name: 'HNB BANK TRANSFER',
-    shortName: 'HNB',
     details: `*HNB Bank - Nittambuwa Branch*
 *Name: M I M IFLAJ*
 *Account Number: 250020285400*`,
-    emoji: '🏦',
     icon: '🇱🇰'
   },
-  'boc': {
-    name: 'BOC BANK TRANSFER', 
-    shortName: 'BOC',
+  boc: {
+    name: 'BOC BANK TRANSFER',
     details: `*BOC Bank - Nittambuwa Branch*
 *Account Number: 0091759510*
 *Name: Samsul nisa*`,
-    emoji: '🏦',
     icon: '🇱🇰'
   }
 };
@@ -38,7 +34,13 @@ module.exports = {
       const content = mek.message;
       if (!content || key.fromMe) return;
 
-      const text =
+      const from = key.remoteJid;
+
+      // =============================
+      // 🔥 EXTRACT TEXT OR BUTTON ID
+      // =============================
+
+      let text =
         content.conversation ||
         content.extendedTextMessage?.text ||
         content.imageMessage?.caption ||
@@ -46,27 +48,73 @@ module.exports = {
         content.documentMessage?.caption ||
         "";
 
-      if (!text.trim()) return;
-      
-      const msg = text.toLowerCase();
-      const from = key.remoteJid;
+      let selectedId = '';
 
-      console.log("🏦 [MMT BANK] Message received:", msg);
+      // Handle normal button
+      if (content.buttonsResponseMessage) {
+        selectedId = content.buttonsResponseMessage.selectedButtonId;
+      }
+
+      // Handle interactive flow button
+      if (content.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
+        try {
+          const parsed = JSON.parse(
+            content.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson
+          );
+          selectedId = parsed.id || '';
+        } catch {}
+      }
+
+      const msg = text.toLowerCase();
+
+      // =============================
+      // 🎯 HANDLE BUTTON SELECTION
+      // =============================
+
+      if (selectedId === 'bank_hnb' || selectedId === 'bank_boc') {
+
+        const keyName = selectedId.replace('bank_', '');
+        const selectedBank = bankDetails[keyName];
+
+        const bankMessage = `🏦 *PAYMENT DETAILS*
+────────────────────
+${selectedBank.icon} *${selectedBank.name}*
+────────────────────
+${selectedBank.details}
+────────────────────
+📞 *Support:* wa.me/94722136082`;
+
+        await conn.sendMessage(from, {
+          image: { url: serviceLogo },
+          caption: bankMessage,
+          contextInfo: {
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+              newsletterJid: channelJid,
+              newsletterName: channelName,
+              serverMessageId: -1
+            }
+          }
+        }, { quoted: mek });
+
+        console.log(`🏦 Sent ${selectedBank.name} details`);
+        return;
+      }
+
+      // =============================
+      // 🏦 HANDLE BANK KEYWORD REQUEST
+      // =============================
 
       const isBankQuery = bankKeywords.some(keyword => msg.includes(keyword));
-      
       if (!isBankQuery) return;
 
       try {
         await conn.sendMessage(from, {
-          react: {
-            text: "🏦",
-            key: mek.key,
-          }
+          react: { text: "🏦", key: mek.key }
         });
-      } catch (reactError) {}
+      } catch {}
 
-      // Send bank selection with buttons AND preserve 3-language descriptions
       const buttonText = `🏦 *BANK DETAILS REQUEST*
 ────────────────────
 🇱🇰 *HNB Bank*
@@ -108,124 +156,14 @@ module.exports = {
         ]
       }, { quoted: mek });
 
-      console.log(`🏦 [MMT BANK] Sent bank selection buttons`);
-
-      // ----- BUTTON RESPONSE HANDLER (built-in) -----
-      // This handles the button responses immediately after sending
-      
-      // Wait for response (this is a one-time listener)
-      const responseHandler = async ({ messages }) => {
-        try {
-          // Loop through all messages in the upsert
-          for (const responseMsg of messages) {
-            // Check if message and key exist
-            if (!responseMsg?.message || !responseMsg?.key) continue;
-            
-            const responseKey = responseMsg.key;
-            if (responseKey.remoteJid !== from) continue; // Different chat
-            
-            let selectedId = '';
-            
-            // Check for button response
-            if (responseMsg.message.buttonsResponseMessage) {
-              selectedId = responseMsg.message.buttonsResponseMessage.selectedButtonId;
-            } else if (responseMsg.message.interactiveResponseMessage) {
-              const nativeResponse = responseMsg.message.interactiveResponseMessage.nativeFlowResponseMessage;
-              if (nativeResponse?.paramsJson) {
-                try {
-                  const parsed = JSON.parse(nativeResponse.paramsJson);
-                  selectedId = parsed.id || '';
-                } catch (e) {}
-              }
-            }
-            
-            if (!selectedId) continue;
-            
-            console.log("🏦 [MMT BANK] Button selected:", selectedId);
-            
-            // Handle bank selection
-            if (selectedId === 'bank_hnb') {
-              const selectedBank = bankDetails['hnb'];
-              const bankMessage = `🏦 *PAYMENT DETAILS*
-────────────────────
-${selectedBank.icon} *${selectedBank.name}*
-────────────────────
-${selectedBank.details}
-────────────────────
-📞 *Support:* wa.me/94722136082`;
-
-              await conn.sendMessage(from, {
-                image: { url: serviceLogo },
-                caption: bankMessage,
-                contextInfo: {
-                  forwardingScore: 999,
-                  isForwarded: true,
-                  forwardedNewsletterMessageInfo: {
-                    newsletterJid: channelJid,
-                    newsletterName: channelName,
-                    serverMessageId: -1
-                  }
-                }
-              });
-              
-              console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
-              
-              // Remove listener after handling
-              conn.ev.off('messages.upsert', responseHandler);
-              break; // Exit loop after handling
-              
-            } else if (selectedId === 'bank_boc') {
-              const selectedBank = bankDetails['boc'];
-              const bankMessage = `🏦 *PAYMENT DETAILS*
-────────────────────
-${selectedBank.icon} *${selectedBank.name}*
-────────────────────
-${selectedBank.details}
-────────────────────
-📞 *Support:* wa.me/94722136082`;
-
-              await conn.sendMessage(from, {
-                image: { url: serviceLogo },
-                caption: bankMessage,
-                contextInfo: {
-                  forwardingScore: 999,
-                  isForwarded: true,
-                  forwardedNewsletterMessageInfo: {
-                    newsletterJid: channelJid,
-                    newsletterName: channelName,
-                    serverMessageId: -1
-                  }
-                }
-              });
-              
-              console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
-              
-              // Remove listener after handling
-              conn.ev.off('messages.upsert', responseHandler);
-              break; // Exit loop after handling
-            }
-          }
-        } catch (handlerError) {
-          console.error("❌ [MMT BANK] Response handler error:", handlerError);
-        }
-      };
-      
-      // Add listener for button response
-      conn.ev.on('messages.upsert', responseHandler);
-      
-      // Auto-remove listener after 5 minutes (timeout)
-      setTimeout(() => {
-        conn.ev.off('messages.upsert', responseHandler);
-        console.log("🏦 [MMT BANK] Response handler timed out");
-      }, 5 * 60 * 1000);
+      console.log("🏦 Sent bank selection buttons");
 
     } catch (err) {
       console.error("❌ [MMT BANK] Plugin error:", err);
     }
-  },
+  }
 };
 
-// Export bank details for external use if needed
 module.exports.bankDetails = bankDetails;
 module.exports.channelJid = channelJid;
 module.exports.channelName = channelName;
