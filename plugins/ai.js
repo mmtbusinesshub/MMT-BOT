@@ -1030,7 +1030,7 @@ module.exports = {
 
             // Build response with FULL service names
             let messageText = "╭━━〔 🎯 *MMT SERVICES* 〕━━╮\n";
-            let messageText = "━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+            messageText += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             const platformEmoji = {
                 tiktok: '🎵', instagram: '📷', facebook: '👤',
