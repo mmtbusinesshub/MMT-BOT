@@ -179,7 +179,7 @@ const SERVICE_KEYWORDS = {
     emojireactions: ['emoji reactions', 'post emoji reactions']
 };
 
-// Complete category lists from your services.json
+// COMPLETE CATEGORY LISTS from your services.json
 const TIKTOK_CATEGORIES = [
     'Tiktok Followers [ Recommended ⭐ ] ᴺᴱᵂ',
     'TikTok Likes [ Accounts with Profile Photos ] ᴺᴱᵂ',
@@ -328,43 +328,159 @@ const CATEGORY_MAP = {
     whatsapp: WHATSAPP_CATEGORIES
 };
 
-// Default services for platform-only queries (5 popular services per platform)
-const DEFAULT_SERVICES = {
-    tiktok: [
-        'TikTok Followers [ Max 100K ] | 100% Real Accounts | No Refill ⚠️ | Instant Start | Day 30K',
-        'TikTok Likes [ Max 10M ] | Accounts with Profile Photos | Cancel Enable | Low Drop | No Refill ⚠️ | Instant Start | Day 100K 🚀',
-        'TikTok Video Views [ Max Unlimited ] | HQ | Cancel Enable | No Refill ⚠️ | Instant Start | Day 10M 🚀',
-        'TikTok Reposts [ Max 500K ] | HQ Accounts | Cancel Enable | No Refill ⚠️ | Instant Start | Day 100K 🚀',
-        'TikTok Live Stream Views + %200 Like + Share [ Max 20K ] | 15 Minutes'
-    ],
-    instagram: [
-        'Instagram Followers [ Max 100K ] | 100% Real Accounts | No Refill ⚠️ | Instant Start | Day 100K 🚀',
-        'Instagram Likes [ Max 10M ] | Accounts with Profile Photos | Cancel Enable | Non Drop | No Refill ⚠️ | Instant Start | Day 200K 🚀',
-        'Instagram Story Views [ Worldwide 🌍 ] [ Max 100K ] | 100% Real Accounts | Cancel Enable | Non Drop | Instant Start | Day 100K 🚀',
-        'Instagram Video Views [ Max Unlimited ] | All Type Link | Instant Start | Day 500K 🚀',
-        'Instagram Channel Member | Global 🌎 | [ Max 100K ] | HQ Real | Instant 𝟏 𝐌𝐢𝐧𝐮𝐭𝐞𝐬 𝐂𝐨𝐦𝐩𝐥𝐞𝐭𝐞𝐝 🚀'
-    ],
-    facebook: [
-        'Facebook Followers [ All Type ] [ Max 100K ] | LQ Accounts | Cancel Enable | No Refill ⚠️ | Instant Start | Day 100K 🚀',
-        'Facebook Post Likes [ Max 1M ] | HQ Accounts | Cancel Enable | Low Drop | No Refill ⚠️ | Instant Start | Day 100K 🚀',
-        'Facebook Page Likes + Followers [ Max 1M ] | HQ Accounts | Low Drop | No Refill ⚠️ | Instant Start | Day 100K 🚀',
-        'Facebook Live Stream Views [ Max 30K ] | Instant Start | 15 Minutes',
-        'Facebook Story Reactions [ 👍 ] [ Max 500K ] | HQ Accounts | No Refill ⚠️ | Instant Start | Day 100K 🚀'
-    ],
-    youtube: [
-        'YouTube Views [ Max 10M ] | Source: Mix / Suggested | Non Drop | Lifetime ♻️ | Instant Start | Day 150K 🚀',
-        'YouTube Subscribers [ Max 50K ] | 100% Real Accounts | Drop 0% | 30 Days ♻️ | Instant Start | Day 10K 🚀',
-        'YouTube Likes [ Max 50K ] | 100% Real Accounts | Drop 0-5% | Lifetime ♻️ | Instant Start | Day 100K 🚀',
-        'YouTube Custom Comments Reply [ Max 10K ] | Video / Shorts / Live Stream | 100% Real Accounts | Non Drop | 30 Days ♻️ | Instant Start | Day 10K 🚀',
-        'YouTube Live Stream Views [ Max 5M ] | %100 Real | %100 Concurrent | 15 Minutes'
-    ],
-    whatsapp: [
-        'Whatsapp Channel Members [ Max 5K ] | HQ Accounts | Drop 0% | Instant Start | Day 5K 🚀',
-        '🌎 Whatsapp Channel Members [ Global ] | [ Max 10K ] | HQ Profiles | Day 2K',
-        'Whatsapp Channel Post Emoji Reactions [ 👍 ] [ Max 50K ] | Instant Start',
-        'Whatsapp Channel Emoji Reactions [ ❤️ ] [ Max 100K ] | Instant Start 🚀',
-        'Whatsapp Channel Members [ Global 🌎 ] [ Max 50K ] | HQ Profiles | Complete In 1 Minute 🚀'
-    ]
+// Category to service type mapping
+const CATEGORY_SERVICE_MAP = {
+    // TikTok mappings
+    'Tiktok Followers [ Recommended ⭐ ] ᴺᴱᵂ': 'followers',
+    'TikTok Followers [ Updated 01.02.2026 ] ᴺᴱᵂ': 'followers',
+    'TikTok Followers [ 100% Real Accounts ] [ Emergency 🚨 ] ᴺᴱᵂ': 'followers',
+    'TikTok Followers [ ♻️ Auto Refill / Best Working ⭐ ] ᴺᴱᵂ': 'followers',
+    'Tiktok Followers [ 100% Real Accounts With Posts ] ᴺᴱᵂ': 'followers',
+    'Tiktok Followers [ Non Drop 🎖️ ] ᴺᴱᵂ': 'followers',
+    'TikTok Followers [ Targeted ]': 'followers',
+    'TikTok Followers [ Targeted ] [ HQ ]': 'followers',
+    'TikTok Followers [ Targeted ] [ 365 Days ♻️ ]': 'followers',
+    'Tiktok Followers [ Saudi Arabia 🇸🇦 ]': 'followers',
+    
+    'TikTok Likes [ Accounts with Profile Photos ] ᴺᴱᵂ': 'likes',
+    'TikTok Likes [ HQ Accounts ] [ Auto Refill ♻️ ] ᴺᴱᵂ': 'likes',
+    'TikTok Likes [ Drop 0% ] ᴺᴱᵂ': 'likes',
+    'TikTok Likes [ Super Fast 🚀 ] [ Cheapest 💥] ᴺᴱᵂ': 'likes',
+    'Tiktok Likes': 'likes',
+    'Tiktok Likes ♻️': 'likes',
+    
+    'TikTok Video Views [ Best Price 💫 ] ᴺᴱᵂ': 'videoviews',
+    'TikTok Video Views [ Lowest Price 💥 ] ᴺᴱᵂ': 'videoviews',
+    'Tiktok Video Views [ Cheapest 💥] [ Fast 🚀 ] ᴺᴱᵂ': 'videoviews',
+    'Tiktok Video Views [ Auto Refill ♻️ ] ᴺᴱᵂ': 'videoviews',
+    'TikTok Video Views [ Drop 0% ] ᴺᴱᵂ': 'videoviews',
+    'TikTok Video Views [ Drop 0% ] [ ⚙️ Auto Refill ♻️ ] ᴺᴱᵂ': 'videoviews',
+    'TikTok Video Views [ Cheapest 💥 ] ᴺᴱᵂ': 'videoviews',
+    'Tiktok Video Views': 'videoviews',
+    
+    'TikTok Comments [ Cheapest Working 💫 ] ᴺᴱᵂ': 'comments',
+    'TikTok Comments [ Custom ]': 'customcomments',
+    
+    'TikTok Video Save [ Cheapest 💥] ᴺᴱᵂ': 'videosave',
+    'TikTok Video Save ᴺᴱᵂ': 'videosave',
+    
+    'Tiktok Video Share ᴺᴱᵂ': 'videoshare',
+    'TikTok Video Share': 'videoshare',
+    'TikTok Reposts ᴺᴱᵂ': 'reposts',
+    
+    'TikTok Live Stream Views + [ Like + Share ]': 'livestreamviews',
+    
+    // Instagram mappings
+    'Instagram Followers [ 100% Real Accounts ] ᴺᴱᵂ': 'followers',
+    'Instagram Followers [ Cheapest Price 💫 ] ᴺᴱᵂ': 'followers',
+    'Instagram Followers [ 100% Real Accounts With Posts ] ᴺᴱᵂ': 'followers',
+    'Instagram Followers [ 100% Old Accounts ] [ Cheapest 💥] ᴺᴱᵂ': 'followers',
+    'Instagram Real Followers [ Old Accounts ] [ No Refill ⚠️ ]': 'followers',
+    'Instagram Real Followers [ Old Accounts ] [ Lifetime ♻️ ]': 'followers',
+    'Instagram Followers [ Likes + Story Views + Profile Views ] [ Old Accounts ]': 'followers',
+    
+    'Instagram Likes [ Accounts with Profile Photos ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ 100% Real Accounts ] [ Best Price 💫 ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ 100% Active and Real Accounts ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ Old Accounts ] [ Stable ✨ ] ᴺᴱᵂ': 'likes',
+    'Instagram Services [ Best Price 💫 ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ Cheapest 💫 ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ Drop 0% ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ India 🇮🇳 ] [ Drop 0% ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ Slow Working ] ᴺᴱᵂ': 'likes',
+    'Instagram Likes [ Auto ⚙️]': 'likes',
+    
+    'Instagram Story Views [ Targeted ] ᴺᴱᵂ': 'storyviews',
+    'Instagram Story Comments [Random] [Verified Accounts]': 'storycomments',
+    'Instagram Story Poll Votes': 'storypoll',
+    
+    'Instagram Comments [ Cheapest 💥] ᴺᴱᵂ': 'comments',
+    'Instagram Comments [ Recommended ⭐ ] ᴺᴱᵂ': 'comments',
+    'Instagram Comments [ Best Price 💫 ] ᴺᴱᵂ': 'comments',
+    'Instagram Comments [ Custom ]': 'customcomments',
+    
+    'Instagram Video Views [ Cheapest 💥] ᴺᴱᵂ': 'videoviews',
+    'Instagram Video Views': 'videoviews',
+    
+    'Instagram Save': 'saves',
+    'Instagram Impression Services': 'impressions',
+    'Instagram Channel Member [ Targeted ] [ Cheapest ]': 'channelmember',
+    'Instagram Repost': 'repost',
+    
+    // Facebook mappings
+    'Facebook Followers [ Best Price 💫 ] ᴺᴱᵂ': 'followers',
+    'Facebook Followers [ Hidden Accounts ] [ Cheapest 💥 ] ᴺᴱᵂ': 'followers',
+    'Facebook Followers [ Cheapest 💥] ᴺᴱᵂ': 'followers',
+    
+    'Facebook Post Likes [ Best Price 💫 ] ᴺᴱᵂ': 'postlikes',
+    'Facebook Post Likes [ Cheapest 💥 ] ᴺᴱᵂ': 'postlikes',
+    'Facebook Page Likes + Followers [ Cheapest 💥 ] ᴺᴱᵂ': 'pagelikes',
+    'Facebook Page Likes + Followers [ Cheapest 💫 ] ᴺᴱᵂ': 'pagelikes',
+    'Facebook Page Likes': 'pagelikes',
+    
+    'Facebook Post Reactions [ Best Price 💫 ] ᴺᴱᵂ': 'postreactions',
+    'Facebook Post Reactions [ Cheapest 💫 ] ᴺᴱᵂ': 'postreactions',
+    'Facebook | Post Reactions - Guaranteed ♻️ | High Speed': 'postreactions',
+    
+    'Facebook Group Members [ Cheapest 💥] ᴺᴱᵂ': 'groupmembers',
+    'Facebook Live Stream Views [ 100% Concurrent ] [ Cheapest 💥 ] ᴺᴱᵂ': 'livestreamviews',
+    'Facebook Comments [ Best Price 💫 ] ᴺᴱᵂ': 'comments',
+    'Facebook Comments': 'comments',
+    'Facebook Views [ Video / Reels ] ᴺᴱᵂ': 'videoviews',
+    'Facebook Story Reactions [ Cheapest 💫 ] ᴺᴱᵂ': 'storyreactions',
+    'Facebook Story Views': 'storyviews',
+    'Facebook Story Reactions': 'storyreactions',
+    'Facebook Watch Time Views [ 60K Minutes ] [ Lifetime ♻️ ] ᴺᴱᵂ': 'watchtimeviews',
+    
+    // YouTube mappings
+    'Youtube Views [ Best ⭐ ] ᴺᴱᵂ': 'views',
+    'Youtube Views [ Recommended ⭐ ] ᴺᴱᵂ': 'views',
+    'Youtube Views [ Recommended 🎖️] ᴺᴱᵂ': 'views',
+    'Youtube Views [ 100% Real Quality Views ] ♻️ ᴺᴱᵂ': 'views',
+    'YouTube Views [ CTR Search ] ᴺᴱᵂ': 'ctrviews',
+    'YouTube Views [ Native Ads ]': 'views',
+    'Youtube Views ♻️': 'views',
+    'Youtube Adwords Views [ 100% Real Views ] ᴺᴱᵂ': 'adwords',
+    
+    'Youtube Subscribers [ Fastest Service 🚀 ] ᴺᴱᵂ': 'subscribers',
+    'Youtube Subscribers [ Update Working ] ᴺᴱᵂ': 'subscribers',
+    'Youtube Subscribers ⚠️': 'subscribers',
+    'Youtube Subscribers ♻️': 'subscribers',
+    'Youtube Subscribers | Targeted ♻️': 'subscribers',
+    
+    'Youtube Likes ♻️': 'likes',
+    
+    'YouTube Custom Comments Reply ᴺᴱᵂ': 'customcomments',
+    'YouTube Comment Reply Likes ᴺᴱᵂ': 'comments',
+    'YouTube Video/Shorts Comments Created by AI 🤖 ᴺᴱᵂ': 'comments',
+    'YouTube Video/Shorts Comment Likes ᴺᴱᵂ': 'comments',
+    'YouTube Live Stream Custom Chat Comments ᴺᴱᵂ': 'customcomments',
+    'Youtube Comments [ Custom ]': 'customcomments',
+    'Youtube Comments Likes': 'comments',
+    
+    'YouTube Watch Time Views ᴺᴱᵂ': 'watchtime',
+    'Youtube Watch Time Views ᴺᴱᵂ': 'watchtime',
+    'YouTube WatchTime [ 100% Google Ads ]': 'watchtime',
+    'YouTube Watch Hours [ 100% Stabil ]': 'watchhours',
+    'YouTube Watch Hours': 'watchhours',
+    
+    'YouTube Live Stream Views + Likes [ 100% Concurrent ] ᴺᴱᵂ': 'livestreamviews',
+    'YouTube Live Stream Views': 'livestreamviews',
+    'YouTube Live Stream Reaction': 'livestreamviews',
+    
+    'YouTube Shares [ Choose Speed ] ᴺᴱᵂ': 'socialshares',
+    'YouTube Shares [ Choose GEO ] ᴺᴱᵂ': 'socialshares',
+    'YouTube Shares [ Choose Referrer ] ᴺᴱᵂ': 'socialshares',
+    
+    'YouTube Services [ 100% Real ] ᴺᴱᵂ': 'views',
+    'YouTube Hype Boost [ Provider ] ᴺᴱᵂ': 'views',
+    'Youtube | %100 Organic Services': 'views',
+    
+    // WhatsApp mappings
+    'Whatsapp Channel Member [ Cheapest 💥] ᴺᴱᵂ': 'channelmembers',
+    'Whatsapp Channel Members [ Cheapest ]': 'channelmembers',
+    'Whatsapp Channel Members [ Targeted ]': 'channelmembers',
+    'Whatsapp Channel Emoji Reactions [ Cheap Slow Server ]': 'emojireactions'
 };
 
 /**
@@ -415,7 +531,33 @@ function detectService(query) {
 }
 
 /**
- * Filter services by category
+ * Check if service is primary (appears in first few words)
+ */
+function isPrimaryService(service, platform, serviceType) {
+    const name = normalize(service.name || "");
+    const platformKeywords = PLATFORM_KEYWORDS[platform] || [platform];
+    const serviceKeywords = SERVICE_KEYWORDS[serviceType] || [serviceType];
+    
+    // Get first 8 words of service name
+    const words = name.split(' ').slice(0, 8);
+    
+    // Check if platform appears in first 3 words
+    const hasPlatformEarly = platformKeywords.some(kw => 
+        words.slice(0, 3).some(word => word.includes(kw) || kw.includes(word))
+    );
+    
+    if (!hasPlatformEarly) return false;
+    
+    // Check if service type appears in first 6 words
+    const hasServiceEarly = serviceKeywords.some(kw => 
+        words.slice(0, 6).some(word => word.includes(kw) || kw.includes(word))
+    );
+    
+    return hasServiceEarly;
+}
+
+/**
+ * Filter services by category using complete category lists
  */
 function filterByCategory(services, platform, service) {
     if (!services || !services.length) return [];
@@ -429,18 +571,9 @@ function filterByCategory(services, platform, service) {
     // Get platform keywords
     const platformKeywords = platformLower ? PLATFORM_KEYWORDS[platformLower] || [platformLower] : null;
     
-    // Get service keywords
-    let serviceKeywords = [];
-    if (serviceLower && SERVICE_KEYWORDS[serviceLower]) {
-        serviceKeywords = SERVICE_KEYWORDS[serviceLower];
-    } else if (serviceLower) {
-        serviceKeywords = [serviceLower];
-    }
-    
-    return services.filter(svc => {
+    // Filter services
+    let filtered = services.filter(svc => {
         const category = svc.category || "";
-        const name = svc.name || "";
-        const normalizedName = normalize(name);
         const normalizedCategory = normalize(category);
         
         // Platform must match in category
@@ -451,34 +584,67 @@ function filterByCategory(services, platform, service) {
             if (!hasPlatformInCategory) return false;
         }
         
-        // If service specified, check if it matches
-        if (serviceKeywords.length > 0) {
-            const hasServiceInCategory = serviceKeywords.some(kw => 
-                normalizedCategory.includes(kw)
-            );
-            const hasServiceInName = serviceKeywords.some(kw => 
-                normalizedName.includes(kw)
+        // If we have platform categories and service specified, check if category matches service type
+        if (platformCategories.length > 0 && serviceLower) {
+            // Check if this category is in our platform's category list
+            const isInPlatformCategory = platformCategories.some(cat => 
+                normalize(cat) === normalizedCategory || 
+                normalize(cat).includes(normalizedCategory) ||
+                normalizedCategory.includes(normalize(cat).substring(0, 20))
             );
             
-            // For better accuracy, prefer category matches
-            if (platformCategories.length > 0) {
-                // Check if category is in platform's category list
-                const isInPlatformCategory = platformCategories.some(cat => 
-                    normalize(cat).includes(serviceKeywords[0])
-                );
-                
-                if (isInPlatformCategory) return true;
+            if (isInPlatformCategory) {
+                // Check if this category maps to the requested service type
+                const mappedService = CATEGORY_SERVICE_MAP[category];
+                if (mappedService && mappedService === serviceLower) {
+                    return true;
+                }
+                // If no direct mapping, check if category contains service keyword
+                if (serviceKeywords.length > 0) {
+                    return serviceKeywords.some(kw => normalizedCategory.includes(kw));
+                }
             }
-            
-            return hasServiceInCategory || hasServiceInName;
+            return false;
         }
         
         return true;
     });
+    
+    // If we have platform and service but no results, try matching by service keywords
+    if (filtered.length === 0 && platformLower && serviceLower) {
+        const serviceKeywords = SERVICE_KEYWORDS[serviceLower] || [serviceLower];
+        
+        filtered = services.filter(svc => {
+            const category = normalize(svc.category || "");
+            const name = normalize(svc.name || "");
+            
+            // Platform must match
+            if (platformKeywords) {
+                const hasPlatformInCategory = platformKeywords.some(kw => category.includes(kw));
+                const hasPlatformInName = platformKeywords.some(kw => name.includes(kw));
+                if (!hasPlatformInCategory && !hasPlatformInName) return false;
+            }
+            
+            // Service must match
+            const hasServiceInCategory = serviceKeywords.some(kw => category.includes(kw));
+            const hasServiceInName = serviceKeywords.some(kw => name.includes(kw));
+            
+            return hasServiceInCategory || hasServiceInName;
+        });
+    }
+    
+    // Apply primary service check for more accurate results
+    if (platformLower && serviceLower && filtered.length > 3) {
+        filtered = filtered.filter(svc => 
+            isPrimaryService(svc, platformLower, serviceLower)
+        );
+    }
+    
+    return filtered;
 }
 
 /**
- * Get 3 cheapest + 2 most expensive services
+ * Get 3 cheapest + 2 most expensive from services
  */
 function getPriceExtremes(services) {
     if (!services.length) return [];
@@ -507,42 +673,54 @@ function getPriceExtremes(services) {
 }
 
 /**
- * Get default services for platform-only queries
+ * Fallback filtering by name
  */
-function getDefaultServices(services, platform) {
-    if (!services || !services.length || !platform) return [];
+function filterByName(services, platform, service) {
+    if (!services || !services.length) return [];
     
-    const platformLower = platform.toLowerCase();
-    const defaultNames = DEFAULT_SERVICES[platformLower] || [];
+    const platformLower = platform ? platform.toLowerCase() : null;
+    const serviceLower = service ? service.toLowerCase() : null;
     
-    // Try to find matching services by name
-    let defaultMatches = services.filter(svc => 
-        defaultNames.some(defaultName => 
-            svc.name && svc.name.includes(defaultName.substring(0, 30))
-        )
-    );
+    const platformKeywords = platformLower ? PLATFORM_KEYWORDS[platformLower] || [platformLower] : null;
     
-    // If not enough matches, get any services from platform
-    if (defaultMatches.length < 5) {
-        const platformKeywords = PLATFORM_KEYWORDS[platformLower] || [platformLower];
-        const platformServices = services.filter(svc => {
-            const name = normalize(svc.name || "");
-            return platformKeywords.some(kw => name.includes(kw));
-        });
-        
-        // Sort by popularity (using service ID as proxy) and take top 5
-        const sorted = platformServices.sort((a, b) => a.service - b.service);
-        defaultMatches = sorted.slice(0, 5);
+    let serviceKeywords = [];
+    if (serviceLower && SERVICE_KEYWORDS[serviceLower]) {
+        serviceKeywords = SERVICE_KEYWORDS[serviceLower];
+    } else if (serviceLower) {
+        serviceKeywords = [serviceLower];
     }
     
-    return defaultMatches.slice(0, 5);
+    let filtered = services.filter(svc => {
+        const name = normalize(svc.name || "");
+        
+        if (platformKeywords) {
+            const hasPlatformInName = platformKeywords.some(kw => name.includes(kw));
+            if (!hasPlatformInName) return false;
+        }
+        
+        if (serviceKeywords.length > 0) {
+            const hasServiceInName = serviceKeywords.some(kw => name.includes(kw));
+            if (!hasServiceInName) return false;
+        }
+        
+        return true;
+    });
+    
+    // Apply primary service check
+    if (platformLower && serviceLower && filtered.length > 3) {
+        filtered = filtered.filter(svc => 
+            isPrimaryService(svc, platformLower, serviceLower)
+        );
+    }
+    
+    return filtered;
 }
 
 function createServiceItem(service, index) {
     const emoji = numberToEmoji(index + 1);
     const priceDisplay = formatPriceDisplay(service);
     
-    // Return full unmodified service name
+    // Return FULL unmodified service name
     return `${emoji} *${service.name}*\n` +
            `${priceDisplay}\n` +
            `📦 Min: ${service.min} | Max: ${service.max}\n` +
@@ -574,8 +752,13 @@ function formatServiceType(service) {
         reel: 'REEL',
         videoviews: 'VIDEO VIEWS',
         storyviews: 'STORY VIEWS',
+        storyreactions: 'STORY REACTIONS',
+        storycomments: 'STORY COMMENTS',
+        storypoll: 'STORY POLL',
         pagelikes: 'PAGE LIKES',
         postlikes: 'POST LIKES',
+        postreactions: 'POST REACTIONS',
+        groupmembers: 'GROUP MEMBERS',
         channelmembers: 'CHANNEL MEMBERS',
         customcomments: 'CUSTOM COMMENTS',
         randomcomments: 'RANDOM COMMENTS',
@@ -584,7 +767,25 @@ function formatServiceType(service) {
         watchhours: 'WATCH HOURS',
         adwords: 'ADWORDS VIEWS',
         ctrviews: 'CTR VIEWS',
-        socialshares: 'SOCIAL SHARES'
+        socialshares: 'SOCIAL SHARES',
+        impressions: 'IMPRESSIONS',
+        reach: 'REACH',
+        discover: 'DISCOVER',
+        repost: 'REPOST',
+        reposts: 'REPOSTS',
+        videosave: 'VIDEO SAVE',
+        videoshare: 'VIDEO SHARE',
+        emojireactions: 'EMOJI REACTIONS',
+        channelmember: 'CHANNEL MEMBER',
+        profilevisit: 'PROFILE VISIT',
+        watchtimeviews: 'WATCH TIME VIEWS',
+        autorefill: 'AUTO REFILL',
+        norefill: 'NO REFILL',
+        instant: 'INSTANT',
+        fast: 'FAST',
+        cancel: 'CANCEL',
+        drop: 'DROP',
+        retention: 'RETENTION'
     };
     
     return serviceMap[service] || service.toUpperCase();
@@ -640,52 +841,8 @@ module.exports = {
             console.log('🎯 Service  :', service || '❌ Not detected');
             console.log('========================================\n');
 
-            // Handle platform-only queries
-            if (platform && !service) {
-                const defaultServices = getDefaultServices(services, platform);
-                
-                if (defaultServices.length > 0) {
-                    let messageText = "╭━━━〔 🎯 *POPULAR SERVICES* 〕━━━━╮\n\n";
-                    
-                    const platformEmoji = {
-                        tiktok: '🎵', instagram: '📷', facebook: '👤',
-                        youtube: '▶️', whatsapp: '💬'
-                    }[platform] || '📱';
-                    
-                    messageText += `${platformEmoji} *Platform:* ${platform.toUpperCase()}\n`;
-                    messageText += `✨ *Showing:* Popular ${platform} services\n`;
-                    messageText += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-                    
-                    defaultServices.forEach((svc, idx) => {
-                        messageText += createServiceItem(svc, idx) + "\n\n";
-                    });
-                    
-                    messageText += `💡 *Tip:* Be more specific! Try "${platform} likes" or "${platform} views"\n\n`;
-                    messageText += `📞 *Support:* wa.me/94722136082\n`;
-                    messageText += `🌐 *Website:* https://makemetrend.online\n`;
-                    messageText += `╰━━━━━━━━━━━━━━━━━━━━━━━━╯`;
-                    
-                    await conn.sendMessage(from, {
-                        image: { url: serviceLogo },
-                        caption: messageText,
-                        contextInfo: {
-                            forwardingScore: 999,
-                            isForwarded: true,
-                            forwardedNewsletterMessageInfo: {
-                                newsletterJid: channelJid,
-                                newsletterName: channelName,
-                                serverMessageId: -1
-                            }
-                        }
-                    }, { quoted: mek });
-                    
-                    console.log(`✅ [AI PLUGIN] Sent ${defaultServices.length} default ${platform} services to ${from}`);
-                    return;
-                }
-            }
-
-            // Handle incomplete queries
             if (!platform || !service) {
+                // Show available options if incomplete query
                 let helpText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
                 helpText += "❌ *Please specify both platform and service*\n\n";
                 helpText += "📝 *Available Platforms:*\n";
@@ -713,15 +870,22 @@ module.exports = {
                 return;
             }
 
-            // Filter by category
+            // Filter by category using complete category lists
             let filtered = filterByCategory(services, platform, service);
             
             console.log(`🔍 Category filter: found ${filtered.length} ${service} services for ${platform}`);
 
-            // If no results, try platform only
+            // Fallback to name filtering if needed
             if (filtered.length === 0) {
-                console.log(`ℹ️ No ${service} services found, showing ${platform} services`);
-                filtered = filterByCategory(services, platform, null);
+                console.log(`ℹ️ No category matches, trying name filter`);
+                filtered = filterByName(services, platform, service);
+                console.log(`🔍 Name filter: found ${filtered.length} ${service} services`);
+            }
+
+            // Final fallback - platform only
+            if (filtered.length === 0) {
+                console.log(`ℹ️ No ${service} services found, showing all ${platform} services`);
+                filtered = filterByName(services, platform, null);
             }
 
             // Get 3 cheapest + 2 most expensive
@@ -734,7 +898,7 @@ module.exports = {
                 return;
             }
 
-            // Build response with full service names
+            // Build response with FULL service names
             let messageText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
 
             const platformEmoji = {
@@ -749,17 +913,22 @@ module.exports = {
                 channel: '📢', reactions: '😊', watchtime: '⏱️',
                 group: '👥', poll: '📊', video: '🎬',
                 post: '📝', page: '📄', reel: '🎥',
-                videoviews: '🎬', storyviews: '📖', pagelikes: '👍',
-                postlikes: '👍', channelmembers: '👥', customcomments: '💭',
-                randomcomments: '🎲', emojicomments: '😊', livestreamviews: '🔴',
-                watchhours: '⏰', adwords: '📊', ctrviews: '📈',
-                socialshares: '🔄'
+                videoviews: '🎬', storyviews: '📖', storyreactions: '😊',
+                storycomments: '💬', storypoll: '📊', pagelikes: '👍',
+                postlikes: '👍', postreactions: '❤️', groupmembers: '👥',
+                channelmembers: '👥', customcomments: '💭', randomcomments: '🎲',
+                emojicomments: '😊', livestreamviews: '🔴', watchhours: '⏰',
+                adwords: '📊', ctrviews: '📈', socialshares: '🔄',
+                impressions: '👁️', reach: '📡', discover: '🔍',
+                repost: '🔄', reposts: '🔄', videosave: '💾',
+                videoshare: '📤', emojireactions: '😊', channelmember: '👤',
+                profilevisit: '👤', watchtimeviews: '⏱️'
             }[service] || '🎯';
             
             messageText += `${platformEmoji} *Platform:* ${platform.toUpperCase()}\n`;
             messageText += `${serviceEmoji} *Service:* ${formatServiceType(service)}\n`;
             
-            // Show category if available
+            // Show full category name
             if (filtered.length > 0 && filtered[0].category) {
                 messageText += `📁 *Category:* ${filtered[0].category}\n`;
             }
