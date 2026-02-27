@@ -3,7 +3,7 @@ const axios = require("axios");
 let lkrToUsd = 0.0033;
 let lkrToInr = 0.29;
 
-// Exchange rate functions (unchanged)
+// Exchange rate functions
 async function updateExchangeRates() {
     try {
         const usdResponse = await axios.get("https://api.exchangerate.host/latest?base=LKR&symbols=USD");
@@ -17,7 +17,7 @@ async function updateExchangeRates() {
 updateExchangeRates();
 setInterval(updateExchangeRates, 12 * 60 * 60 * 1000);
 
-// Helper functions (unchanged)
+// Helper functions
 function extractLKRPrice(priceStr) {
     if (!priceStr) return 0;
     const priceString = String(priceStr);
@@ -93,120 +93,160 @@ function extractNumericPrice(service) {
     return extractLKRPrice(service.price);
 }
 
-// Platform keywords (from your service names)
+// Platform keywords
 const PLATFORM_KEYWORDS = {
-    tiktok: ['tiktok', 'tt'],
+    tiktok: ['tiktok', 'tt', 'tik'],
     instagram: ['instagram', 'ig', 'insta'],
     facebook: ['facebook', 'fb'],
     youtube: ['youtube', 'yt'],
     whatsapp: ['whatsapp', 'wa']
 };
 
-// Service keywords (based on your actual service names)
+// Service keywords for detection
 const SERVICE_KEYWORDS = {
-    // Core services
-    followers: ['follower', 'followers'],
-    likes: ['like', 'likes'],
-    views: ['view', 'views'],
-    comments: ['comment', 'comments'],
-    
-    // Platform-specific variations
-    'video views': ['video views', 'video view'],
-    'story views': ['story views', 'story view'],
-    'story reactions': ['story reactions', 'story reaction'],
-    'post likes': ['post likes', 'post like'],
-    'page likes': ['page likes', 'page like'],
-    'channel members': ['channel members', 'channel member'],
-    'channel reactions': ['channel reactions', 'emoji reactions'],
-    'live views': ['live views', 'live stream views'],
-    'watch time': ['watch time', 'watch hours', 'watchtime'],
-    'subscribers': ['subscriber', 'subscribers', 'subs'],
-    'reposts': ['repost', 'reposts', 'share', 'shares'],
-    'saves': ['save', 'saves'],
-    'group members': ['group members', 'group member'],
-    'poll votes': ['poll votes', 'poll vote'],
-    
-    // Combined services (will match if any keyword appears)
-    'page likes + followers': ['page likes', 'followers'], // Will match both
+    followers: ['follower', 'followers', 'fans'],
+    likes: ['like', 'likes', 'heart'],
+    views: ['view', 'views', 'plays'],
+    comments: ['comment', 'comments', 'reply'],
+    shares: ['share', 'shares', 'repost'],
+    saves: ['save', 'saves', 'bookmark'],
+    story: ['story', 'stories'],
+    live: ['live', 'stream'],
+    channel: ['channel', 'members'],
+    reactions: ['reaction', 'reactions', 'emoji'],
+    subscribers: ['subscriber', 'subscribers', 'subs'],
+    watchtime: ['watch time', 'watch hours', 'hours'],
+    group: ['group', 'groups'],
+    poll: ['poll', 'votes'],
+    video: ['video', 'videos'],
+    post: ['post', 'posts'],
+    page: ['page', 'pages']
 };
 
-// Extract platform from query
+/**
+ * Detect platform from query
+ */
 function detectPlatform(query) {
     const normalized = normalize(query);
     for (const [platform, keywords] of Object.entries(PLATFORM_KEYWORDS)) {
         for (const keyword of keywords) {
-            if (normalized.includes(keyword)) return platform;
+            if (normalized.includes(keyword)) {
+                return platform;
+            }
         }
     }
     return null;
 }
 
-// Extract service type from query
+/**
+ * Detect service type from query
+ */
 function detectService(query) {
     const normalized = normalize(query);
     
-    // Check for multi-word services first (longer phrases)
+    // Check for multi-word services first
     const multiWordServices = [
-        'video views', 'story views', 'story reactions', 'post likes', 
-        'page likes', 'channel members', 'channel reactions', 'live views',
-        'watch time', 'group members', 'poll votes'
+        'watch time', 'watch hours'
     ];
     
     for (const service of multiWordServices) {
-        if (normalized.includes(service)) return service;
+        if (normalized.includes(service)) return service.replace(' ', '');
     }
     
     // Check single-word services
-    const singleWordServices = [
-        'followers', 'likes', 'views', 'comments', 'subscribers',
-        'reposts', 'saves', 'shares'
-    ];
-    
-    for (const service of singleWordServices) {
-        if (normalized.includes(service)) return service;
+    for (const [service, keywords] of Object.entries(SERVICE_KEYWORDS)) {
+        for (const keyword of keywords) {
+            if (normalized.includes(keyword)) {
+                return service;
+            }
+        }
     }
     
     return null;
 }
 
-// Filter services based on platform and service keywords
-function filterServices(services, platform, service) {
+/**
+ * CATEGORY-BASED FILTERING
+ * This uses the category field from services.json to match user queries
+ * Each service belongs to a category like "Instagram Likes [ Accounts with Profile Photos ]"
+ */
+function filterByCategory(services, platform, service) {
     if (!services || !services.length) return [];
     
     const platformLower = platform ? platform.toLowerCase() : null;
     const serviceLower = service ? service.toLowerCase() : null;
     
-    // Get all keywords for the detected service
+    // Get platform keywords for matching
+    const platformKeywords = platformLower ? PLATFORM_KEYWORDS[platformLower] || [platformLower] : null;
+    
+    // Get service keywords for matching
     let serviceKeywords = [];
     if (serviceLower && SERVICE_KEYWORDS[serviceLower]) {
         serviceKeywords = SERVICE_KEYWORDS[serviceLower];
     } else if (serviceLower) {
-        // If service not in our map, use the service name itself as keyword
         serviceKeywords = [serviceLower];
     }
     
-    const platformKeywords = platformLower ? PLATFORM_KEYWORDS[platformLower] || [platformLower] : null;
-    
     return services.filter(svc => {
+        const category = normalize(svc.category || "");
         const name = normalize(svc.name || "");
         
-        // Platform must match if specified
+        // Platform must match in category (primary filter)
         if (platformKeywords) {
-            const hasPlatform = platformKeywords.some(kw => name.includes(kw));
-            if (!hasPlatform) return false;
+            const hasPlatformInCategory = platformKeywords.some(kw => category.includes(kw));
+            if (!hasPlatformInCategory) return false;
         }
         
-        // Service must match if specified
+        // Service must match in category (secondary filter)
         if (serviceKeywords.length > 0) {
-            const hasService = serviceKeywords.some(kw => name.includes(kw));
-            if (!hasService) return false;
+            const hasServiceInCategory = serviceKeywords.some(kw => category.includes(kw));
+            if (!hasServiceInCategory) return false;
         }
         
         return true;
     });
 }
 
-// Get 3 cheapest + 2 most expensive (total 5 services)
+/**
+ * Fallback: Filter by service name if category filtering returns no results
+ */
+function filterByName(services, platform, service) {
+    if (!services || !services.length) return [];
+    
+    const platformLower = platform ? platform.toLowerCase() : null;
+    const serviceLower = service ? service.toLowerCase() : null;
+    
+    const platformKeywords = platformLower ? PLATFORM_KEYWORDS[platformLower] || [platformLower] : null;
+    
+    let serviceKeywords = [];
+    if (serviceLower && SERVICE_KEYWORDS[serviceLower]) {
+        serviceKeywords = SERVICE_KEYWORDS[serviceLower];
+    } else if (serviceLower) {
+        serviceKeywords = [serviceLower];
+    }
+    
+    return services.filter(svc => {
+        const name = normalize(svc.name || "");
+        
+        // Platform must match in name
+        if (platformKeywords) {
+            const hasPlatformInName = platformKeywords.some(kw => name.includes(kw));
+            if (!hasPlatformInName) return false;
+        }
+        
+        // Service must match in name
+        if (serviceKeywords.length > 0) {
+            const hasServiceInName = serviceKeywords.some(kw => name.includes(kw));
+            if (!hasServiceInName) return false;
+        }
+        
+        return true;
+    });
+}
+
+/**
+ * Get 3 cheapest + 2 most expensive services
+ */
 function getPriceExtremes(services) {
     if (!services.length) return [];
     if (services.length <= 5) return services;
@@ -295,25 +335,31 @@ module.exports = {
             const platform = detectPlatform(text);
             const service = detectService(text);
 
-            console.log('\n📊 [QUERY ANALYSIS] ==================');
+            console.log('\n📊 [CATEGORY-BASED FILTERING] ==================');
             console.log('📝 Query    :', text);
             console.log('📱 Platform :', platform || '❌ Not detected');
             console.log('🎯 Service  :', service || '❌ Not detected');
-            console.log('======================================\n');
+            console.log('===============================================\n');
 
-            // Filter services based on detection
-            let filtered = filterServices(services, platform, service);
+            // PRIMARY METHOD: Filter by category (most accurate)
+            let filtered = filterByCategory(services, platform, service);
+            
+            console.log(`🔍 Category filter: found ${filtered.length} services`);
 
-            // If no results with both, try platform only
+            // FALLBACK METHOD: If no category matches, try filtering by name
             if (filtered.length === 0 && platform && service) {
-                console.log(`ℹ️ No matches for ${platform} ${service}, showing all ${platform} services`);
-                filtered = filterServices(services, platform, null);
+                console.log(`ℹ️ No category matches for ${platform} ${service}, trying name filter`);
+                filtered = filterByName(services, platform, service);
+                console.log(`🔍 Name filter: found ${filtered.length} services`);
             }
             
-            // If still no results, try service only
-            if (filtered.length === 0 && !platform && service) {
-                console.log(`ℹ️ Showing all ${service} services`);
-                filtered = filterServices(services, null, service);
+            // If still no results, try platform only
+            if (filtered.length === 0 && platform) {
+                console.log(`ℹ️ Showing all ${platform} services`);
+                filtered = filterByCategory(services, platform, null);
+                if (filtered.length === 0) {
+                    filtered = filterByName(services, platform, null);
+                }
             }
 
             // Final fallback - show some popular services
@@ -339,13 +385,18 @@ module.exports = {
             if (service) {
                 const serviceEmoji = {
                     followers: '👥', subscribers: '📺', likes: '❤️',
-                    views: '👀', comments: '💬', 'video views': '🎬',
-                    'story views': '📖', 'post likes': '👍', 'page likes': '📄',
-                    'channel members': '📢', 'live views': '🔴', 'watch time': '⏱️',
-                    reposts: '🔄', saves: '🔖', 'group members': '👥',
-                    'poll votes': '📊'
+                    views: '👀', comments: '💬', shares: '🔄',
+                    saves: '🔖', story: '📖', live: '🔴',
+                    channel: '📢', reactions: '😊', watchtime: '⏱️',
+                    group: '👥', poll: '📊', video: '🎬',
+                    post: '📝', page: '📄'
                 }[service] || '🎯';
                 messageText += `${serviceEmoji} *Service:* ${service.toUpperCase()}\n`;
+            }
+            
+            // Show filter method used
+            if (filtered.length > 0) {
+                messageText += `📁 *Category:* ${filtered[0].category.split('[')[0].trim()}\n`;
             }
             
             messageText += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
