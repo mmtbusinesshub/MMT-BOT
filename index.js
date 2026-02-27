@@ -390,68 +390,7 @@ async function connectToWA() {
         selectedDisplayText = mek.message.listResponseMessage.title || '';
         console.log(`🔘 [BUTTON HANDLER] List item selected: ${selectedId} - ${selectedDisplayText}`);
       }
-
-      // Handle BANK BUTTON responses
-      if (selectedId === 'bank_hnb' || selectedId === 'bank_boc') {
-        try {
-          const bankPlugin = require('./plugins/bank.js');
-          const bank = selectedId === 'bank_hnb' ? 'hnb' : 'boc';
-          const selectedBank = bankPlugin.bankDetails[bank];
-          
-          console.log(`🏦 [BUTTON HANDLER] Sending ${bank} bank details`);
-          
-          await conn.sendMessage(from, {
-            image: { url: bankPlugin.serviceLogo },
-            caption: `🏦 *PAYMENT DETAILS*
-────────────────────
-${selectedBank.icon} *${selectedBank.name}*
-────────────────────
-${selectedBank.details}
-────────────────────
-📞 *Support:* wa.me/94722136082`,
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: bankPlugin.channelJid,
-                newsletterName: bankPlugin.channelName,
-                serverMessageId: -1
-              }
-            }
-          }, { quoted: mek });
-          
-          console.log(`✅ [BUTTON HANDLER] Sent ${selectedBank.name} details`);
-          
-        } catch (bankError) {
-          console.error("❌ [BUTTON HANDLER] Error sending bank details:", bankError);
-          await conn.sendMessage(from, { 
-            text: "❌ Sorry, there was an error processing your request." 
-          }, { quoted: mek });
-        }
-      }
       
-      // Handle ADMIN CONTACT button if needed
-      if (selectedId === 'admin_contact' || selectedDisplayText.includes('Admin')) {
-        try {
-          const adminPlugin = require('./plugins/admin_details.js');
-          const adminNumber = adminPlugin.adminNumber || '94722136082';
-          
-          await conn.sendMessage(from, {
-            text: `📞 *Contact Admin*\n\nClick the link below to chat with admin:\nhttps://wa.me/${adminNumber}`,
-            contextInfo: {
-              externalAdReply: {
-                title: "Chat with Admin",
-                body: "MMT BUSINESS HUB",
-                thumbnailUrl: "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/mmt-admin.jpeg?raw=true",
-                mediaType: 1,
-                renderLargerThumbnail: true
-              }
-            }
-          }, { quoted: mek });
-        } catch (adminError) {
-          console.error("❌ [BUTTON HANDLER] Error sending admin contact:", adminError);
-        }
-      }
     }
     const isCmd = body.startsWith(prefix);
     const commandName = isCmd ? body.slice(prefix.length).trim().split(" ")[0].toLowerCase() : '';
