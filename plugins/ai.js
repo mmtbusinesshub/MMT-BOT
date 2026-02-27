@@ -104,16 +104,153 @@ const PLATFORM_KEYWORDS = {
 
 // Service triggers for detecting user intent
 const serviceTriggers = [
+    // Core service keywords
     'price', 'cost', 'rate', 'service', 'buy', 'purchase', 'order',
+    
+    // Platform names
     'instagram', 'ig', 'insta', 'facebook', 'fb', 'tiktok', 'tt', 'tik',
     'youtube', 'yt', 'tube', 'whatsapp', 'wa',
+    
+    // Core service types
     'follower', 'followers', 'fans', 'like', 'likes', 'heart', 'reaction', 'reactions',
     'view', 'views', 'plays', 'watch', 'comment', 'comments', 'reply',
     'share', 'shares', 'repost', 'save', 'saves', 'bookmark',
     'story', 'stories', 'live', 'stream', 'subscriber', 'subscribers', 'subs',
     'member', 'members', 'channel', 'watchtime', 'watch time', 'watch hours', 'hours',
     'group', 'groups', 'poll', 'votes', 'video', 'videos', 'post', 'posts',
-    'page', 'pages', 'reel', 'reels', 'impression', 'impressions', 'reach', 'emoji'
+    'page', 'pages', 'reel', 'reels', 'impression', 'impressions', 'reach', 'emoji',
+    
+    // PAGE-SPECIFIC TRIGGERS
+    // General page triggers
+    'page', 'pages', 'fan page', 'business page', 'official page',
+    
+    // Page follower triggers
+    'page followers', 'page follower', 'fan page followers',
+    'page fans', 'page fan', 'page audience',
+    
+    // Page like triggers
+    'page likes', 'page like', 'fan page likes',
+    'page reactions', 'page reaction',
+    
+    // Page view triggers
+    'page views', 'page view', 'page visits',
+    'page traffic', 'page visitors',
+    
+    // Page engagement triggers
+    'page engagement', 'page interactions',
+    'page comments', 'page comment',
+    'page shares', 'page share',
+    'page saves', 'page save',
+    
+    // Page reach triggers
+    'page reach', 'page impressions',
+    'page visibility', 'page exposure',
+    
+    // FACEBOOK PAGE SPECIFIC
+    'facebook page', 'fb page', 'meta page',
+    'facebook page likes', 'fb page likes',
+    'facebook page followers', 'fb page followers',
+    'facebook page fans', 'fb page fans',
+    
+    // INSTAGRAM PAGE/PROFILE SPECIFIC
+    'instagram page', 'ig page', 'insta page',
+    'instagram profile', 'ig profile',
+    'profile views', 'profile visits',
+    'profile followers', 'profile likes',
+    
+    // YOUTUBE PAGE/CHANNEL SPECIFIC
+    'youtube page', 'yt page',
+    'youtube channel', 'yt channel',
+    'channel views', 'channel visits',
+    'channel subscribers', 'channel subs',
+    
+    // TIKTOK PAGE/PROFILE SPECIFIC
+    'tiktok page', 'tt page',
+    'tiktok profile', 'tt profile',
+    'profile followers',
+    
+    // POST-SPECIFIC (different from page)
+    'post likes', 'post like',
+    'post comments', 'post comment',
+    'post shares', 'post share',
+    'post reactions', 'post reaction',
+    'post views', 'post view',
+    'post saves', 'post save',
+    'post impressions', 'post reach',
+    
+    // COMBINED PAGE + POST
+    'page and post', 'page & post',
+    'page likes + followers', 'page likes and followers',
+    'page engagement package',
+    
+    // ENHANCED WHATSAPP CHANNEL TRIGGERS
+    // Channel members variations
+    'channel members', 'channel member', 'members', 'subscribers',
+    
+    // Channel reactions variations
+    'channel reactions', 'channel reaction', 'post reactions', 'post reaction',
+    'emoji reactions', 'emoji reaction', 'emojis',
+    
+    // Specific emoji triggers
+    '👍', 'thumbs up', 'thumbsup',
+    '❤️', 'heart', 'love',
+    '😂', 'laugh', 'haha', 'laughing',
+    '😲', 'wow', 'surprised', 'shocked',
+    '😥', 'sad', 'cry', 'crying',
+    '🙏', 'pray', 'thankful', 'thanks',
+    '👏', 'clap', 'applause', 'clapping',
+    '🔥', 'fire', 'hot', 'trending',
+    '🏆', 'trophy', 'winner', 'champion',
+    '🎉', 'party', 'celebrate', 'celebration',
+    
+    // Mixed reactions
+    'mixed reactions', 'random reactions', 'mix emoji',
+    
+    // Channel posts
+    'channel posts', 'channel post', 'post emoji',
+    
+    // Channel targeting
+    'global channel', 'worldwide channel', 'targeted channel',
+    'country channel', 'specific channel',
+    
+    // Country-specific channel triggers
+    'india channel', 'indian channel',
+    'usa channel', 'us channel', 'america channel',
+    'arab channel', 'saudi channel',
+    'turkey channel', 'turkish channel',
+    'europe channel', 'european channel',
+    'brazil channel', 'brazilian channel',
+    'pakistan channel', 'pakistani channel',
+    'philippines channel', 'filipino channel',
+    'vietnam channel', 'vietnamese channel',
+    'thailand channel', 'thai channel',
+    'nigeria channel', 'nigerian channel',
+    'indonesia channel', 'indonesian channel',
+    
+    // Channel speed/quality
+    'fast channel', 'instant channel', 'quick channel',
+    'cheap channel', 'cheapest channel',
+    'slow channel', 'slow server',
+    
+    // Channel duration
+    'lifetime channel', 'permanent channel',
+    
+    // Comprehensive WhatsApp combinations
+    'whatsapp channel', 'wa channel',
+    'channel emoji', 'emoji channel',
+    'channel reactions', 'reactions channel',
+    'channel members', 'members channel',
+    
+    // Individual reaction types with context
+    'like reaction', 'heart reaction', 'love reaction',
+    'laugh reaction', 'haha reaction',
+    'wow reaction', 'surprised reaction',
+    'sad reaction', 'cry reaction',
+    'pray reaction', 'thank you reaction',
+    'clap reaction', 'applause reaction',
+    'fire reaction', 'hot reaction',
+    'trophy reaction', 'winner reaction',
+    'party reaction', 'celebrate reaction'
 ];
 
 // Service keywords for matching
@@ -131,8 +268,8 @@ const SERVICE_KEYWORDS = {
     reel: ['reel', 'reels'],
     live: ['live', 'stream'],
     subscribers: ['subscriber', 'subscribers', 'subs'],
-    channel: ['channel', 'members'],
-    reactions: ['reaction', 'reactions', 'emoji'],
+    channel: ['channel', 'channels'],
+    reactions: ['reaction', 'reactions', 'emoji', 'emojis'],
     watchtime: ['watch time', 'watch hours', 'hours', 'watchtime'],
     group: ['group', 'groups', 'group members'],
     poll: ['poll', 'votes', 'voting'],
@@ -163,10 +300,6 @@ const SERVICE_KEYWORDS = {
     storypoll: ['story poll', 'poll votes'],
     channelmember: ['channel member'],
     profilevisit: ['profile visit', 'profil visit'],
-    pagelikes: ['page likes'],
-    postlikes: ['post likes'],
-    postreactions: ['post reactions'],
-    groupmembers: ['group members'],
     watchtimeviews: ['watch time views'],
     videoviews: ['video views'],
     videosave: ['video save'],
@@ -175,8 +308,133 @@ const SERVICE_KEYWORDS = {
     randomcomments: ['random comments'],
     emojicomments: ['emoji comments'],
     customcomments: ['custom comments'],
-    channelmembers: ['channel members'],
-    emojireactions: ['emoji reactions', 'post emoji reactions']
+    
+    // PAGE-SPECIFIC KEYWORDS (Facebook Pages, etc.)
+    pagefollowers: ['page followers', 'page follower', 'fan page followers'],
+    pagelikes: ['page likes', 'page like', 'fan page likes'],
+    pageviews: ['page views', 'page view', 'page visits'],
+    pagecomments: ['page comments', 'page comment'],
+    pageshares: ['page shares', 'page share'],
+    pagereactions: ['page reactions', 'page reaction'],
+    pageengagement: ['page engagement', 'page interactions'],
+    pageimpressions: ['page impressions', 'page reach'],
+    pagementions: ['page mentions', 'mentions'],
+    pagecheckins: ['page checkins', 'check ins'],
+    pagetags: ['page tags', 'tags'],
+    
+    // FACEBOOK PAGE SPECIFIC
+    facebookpage: ['facebook page', 'fb page', 'meta page'],
+    facebookpagelikes: ['facebook page likes', 'fb page likes', 'meta page likes'],
+    facebookpagefollowers: ['facebook page followers', 'fb page followers', 'meta page followers'],
+    facebookpagereviews: ['page reviews', 'ratings'],
+    
+    // PAGE + FOLLOWERS/LIKES COMBINATIONS
+    pagefans: ['page fans', 'fan page'],
+    pagelikesplusfollowers: ['page likes + followers', 'page likes and followers'],
+    
+    // POST-SPECIFIC (different from page)
+    postlikes: ['post likes', 'post like'],
+    postcomments: ['post comments', 'post comment'],
+    postshares: ['post shares', 'post share'],
+    postreactions: ['post reactions', 'post reaction'],
+    postviews: ['post views', 'post view'],
+    postimpressions: ['post impressions', 'post reach'],
+    postsaves: ['post saves', 'post save'],
+    
+    // INSTAGRAM PAGE/PROFILE SPECIFIC
+    instagrampage: ['instagram page', 'ig page', 'insta page', 'profile'],
+    instagramprofile: ['instagram profile', 'ig profile', 'profile views'],
+    profileviews: ['profile views', 'profile visit'],
+    profilevisits: ['profile visits'],
+    
+    // YOUTUBE PAGE/CHANNEL SPECIFIC
+    youtubechannel: ['youtube channel', 'yt channel', 'channel page'],
+    channelviews: ['channel views', 'channel visits'],
+    channelsubscribers: ['channel subscribers', 'channel subs'],
+    
+    // TIKTOK PAGE/PROFILE SPECIFIC
+    tiktokprofile: ['tiktok profile', 'tt profile'],
+    profilefollowers: ['profile followers'],
+    
+    // WHATSAPP CHANNEL (already had)
+    channelmembers: ['channel members', 'channel member', 'members', 'channel subscribers'],
+    channelreactions: ['channel reactions', 'channel reaction', 'post reactions'],
+    channelemojireactions: ['channel emoji reactions', 'channel emoji reaction'],
+    postemojireactions: ['post emoji reactions', 'post emoji reaction'],
+    
+    // SPECIFIC EMOJI REACTIONS
+    emojireactions: ['emoji reactions', 'emoji reaction', 'reactions'],
+    likeemoji: ['like emoji', '👍', 'thumbs up'],
+    heartemoji: ['heart emoji', '❤️', 'love'],
+    laughingemoji: ['laughing emoji', '😂', 'haha'],
+    surprisedemoji: ['surprised emoji', '😲', 'wow'],
+    sademoji: ['sad emoji', '😥', 'sad'],
+    prayingemoji: ['praying emoji', '🙏', 'pray'],
+    clapemoji: ['clap emoji', '👏', 'clapping'],
+    fireemoji: ['fire emoji', '🔥', 'fire'],
+    trophyemoji: ['trophy emoji', '🏆', 'trophy'],
+    partyemoji: ['party emoji', '🎉', 'party'],
+    
+    // MIXED EMOJI REACTIONS
+    mixedemojireactions: ['mixed emoji reactions', 'mix reactions', 'random mix'],
+    randomemojireactions: ['random emoji reactions', 'random reactions'],
+    
+    // WHATSAPP CHANNEL QUALITY/SPEED
+    fastreactions: ['fast reactions', 'quick reactions'],
+    instantreactions: ['instant reactions', 'instant emoji'],
+    cheapreactions: ['cheap reactions', 'cheapest reactions'],
+    slowreactions: ['slow reactions', 'slow server'],
+    
+    // WHATSAPP CHANNEL TARGETING
+    globalchannel: ['global channel', 'worldwide channel'],
+    targetedchannel: ['targeted channel', 'country specific'],
+    
+    // WHATSAPP CHANNEL SPECIFIC COUNTRIES
+    indiachannel: ['india channel', 'indian members'],
+    usachannel: ['usa channel', 'american members'],
+    arabchannel: ['arab channel', 'arab members'],
+    turkeychannel: ['turkey channel', 'turkish members'],
+    europechannel: ['europe channel', 'european members'],
+    brazilchannel: ['brazil channel', 'brazilian members'],
+    pakistanchannel: ['pakistan channel', 'pakistani members'],
+    philippineschannel: ['philippines channel', 'filipino members'],
+    vietnamchannel: ['vietnam channel', 'vietnamese members'],
+    thailandchannel: ['thailand channel', 'thai members'],
+    nigerianchannel: ['nigeria channel', 'nigerian members'],
+    
+    // WHATSAPP CHANNEL POSTS
+    channelposts: ['channel posts', 'channel post'],
+    channelviews: ['channel views', 'post views'],
+    
+    // WHATSAPP CHANNEL DURATION
+    channelinstant: ['channel instant', 'instant channel'],
+    channelfast: ['channel fast', 'fast channel'],
+    channellifetime: ['channel lifetime', 'lifetime channel'],
+    
+    // WHATSAPP CHANNEL PRICE POINTS
+    cheapertiemoji: ['cheaper emoji', 'cheapest emoji'],
+    cheapertiemojireactions: ['cheaper emoji reactions', 'cheapest reactions'],
+    
+    // WHATSAPP CHANNEL SERVER TYPES
+    fastserver: ['fast server', 'fast completion'],
+    slowserver: ['slow server', 'slow completion'],
+    
+    // COMPREHENSIVE WHATSAPP CHANNEL
+    whatsappchannel: ['whatsapp channel', 'wa channel'],
+    channelemoji: ['channel emoji', 'emoji channel'],
+    channelpost: ['channel post', 'post reactions'],
+    
+    // INDIVIDUAL EMOJI REACTIONS VERBOSE
+    thumbsup: ['thumbs up', 'thumbsup', '👍'],
+    love: ['love', '❤️', 'heart reaction'],
+    laugh: ['laugh', '😂', 'haha reaction'],
+    wow: ['wow', '😲', 'surprised'],
+    sad: ['sad', '😥', 'crying'],
+    pray: ['pray', '🙏', 'thank you'],
+    clap: ['clap', '👏', 'applause'],
+    hot: ['hot', '🔥', 'fire reaction'],
+    winner: ['winner', '🏆', 'champion'],
+    celebrate: ['celebrate', '🎉', 'party reaction']
 };
 
 // COMPLETE CATEGORY LISTS from your services.json
