@@ -107,7 +107,9 @@ ${selectedBank.details}
 await sendInteractiveMessage(conn, from, {
   image: { url: serviceLogo },
   title: "🏦 BANK DETAILS",
-  text: buttonText,
+  text: `🏦 *BANK DETAILS REQUEST*
+
+⭕ Tap button to get full details`,
   footer: "Choose your bank:",
   aimode: true, // 🔥 ADD THIS
   interactiveButtons: [
