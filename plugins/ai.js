@@ -258,150 +258,128 @@ function extractNumericPrice(service) {
 }
 
 /**
- * SMART SMM DETECTION ENGINE - IMPROVED
+ * SMART SMM DETECTION ENGINE - IMPROVED with keyword length scoring
  */
 function detectSMMService(query) {
     const normalized = normalize(query);
-    const words = normalized.split(' ');
     
     let detected = {
         platform: null,
         service: null,
         confidence: 0,
         matchType: 'none',
-        isExactMatch: false
+        platformKeyword: '',
+        serviceKeyword: ''
     };
 
-    // STEP 1: Detect platform with higher priority
-    let detectedPlatform = null;
-    let platformConfidence = 0;
-    let platformKeyword = '';
-    
+    // Platform detection with scoring
+    let bestPlatform = null;
+    let bestPlatformScore = 0;
+    let bestPlatformKeyword = '';
+
     for (const [platform, keywords] of Object.entries(PLATFORM_KEYWORDS)) {
         for (const keyword of keywords) {
             if (normalized.includes(keyword)) {
-                // Check if it's a standalone word or part of phrase
+                // Compute score: length + standalone bonus
+                let score = keyword.length;
+                // Check if standalone
                 const keywordIndex = normalized.indexOf(keyword);
                 const prevChar = keywordIndex > 0 ? normalized[keywordIndex - 1] : ' ';
                 const nextChar = keywordIndex + keyword.length < normalized.length ? 
                     normalized[keywordIndex + keyword.length] : ' ';
-                
-                // Check if keyword is standalone (surrounded by spaces or boundaries)
                 if (prevChar === ' ' && nextChar === ' ') {
-                    detectedPlatform = platform;
-                    platformConfidence = 1.0;
-                    platformKeyword = keyword;
-                    break;
-                } else if (platformConfidence < 0.8) {
-                    detectedPlatform = platform;
-                    platformConfidence = 0.8;
-                    platformKeyword = keyword;
+                    score += 10; // standalone bonus
+                }
+                if (score > bestPlatformScore) {
+                    bestPlatformScore = score;
+                    bestPlatform = platform;
+                    bestPlatformKeyword = keyword;
                 }
             }
         }
-        if (detectedPlatform && platformConfidence === 1.0) break;
     }
 
-    // STEP 2: Detect service type with improved matching
-    let detectedService = null;
-    let serviceConfidence = 0;
-    let matchedServiceType = null;
-    let matchedKeyword = '';
+    // Service detection with scoring
+    let bestService = null;
+    let bestServiceScore = 0;
+    let bestServiceKeyword = '';
 
     for (const [serviceType, config] of Object.entries(SERVICE_KEYWORDS)) {
         for (const keyword of config.keywords) {
             if (normalized.includes(keyword)) {
-                // Check if it's an exact match for the service
+                let score = keyword.length;
                 const keywordIndex = normalized.indexOf(keyword);
                 const prevChar = keywordIndex > 0 ? normalized[keywordIndex - 1] : ' ';
                 const nextChar = keywordIndex + keyword.length < normalized.length ? 
                     normalized[keywordIndex + keyword.length] : ' ';
-                
-                let confidence = 0;
-                
-                // Higher confidence for standalone keywords
                 if (prevChar === ' ' && nextChar === ' ') {
-                    confidence = 0.9;
-                } else {
-                    confidence = 0.6;
+                    score += 10;
                 }
-                
-                // Boost confidence if platform is also detected and matches
-                if (detectedPlatform && config.platforms.includes(detectedPlatform)) {
-                    confidence += 0.2;
+                // Bonus if platform detected and service available on that platform
+                if (bestPlatform && config.platforms.includes(bestPlatform)) {
+                    score += 5;
                 }
-                
-                if (confidence > serviceConfidence) {
-                    serviceConfidence = confidence;
-                    matchedServiceType = serviceType;
-                    matchedKeyword = keyword;
+                if (score > bestServiceScore) {
+                    bestServiceScore = score;
+                    bestService = serviceType;
+                    bestServiceKeyword = keyword;
                 }
             }
         }
     }
 
-    detectedService = matchedServiceType;
+    detected.platform = bestPlatform;
+    detected.service = bestService;
+    detected.confidence = Math.max(bestPlatformScore, bestServiceScore) / 100; // rough normalization
+    detected.platformKeyword = bestPlatformKeyword;
+    detected.serviceKeyword = bestServiceKeyword;
 
-    // STEP 3: Handle platform-only queries
-    if (detectedPlatform && !detectedService) {
-        const defaults = PLATFORM_DEFAULTS[detectedPlatform];
-        detectedService = defaults.primary;
-        serviceConfidence = 0.7;
-        detected.matchType = 'platform-only';
-        
-        console.log(`📌 Platform-only query for ${detectedPlatform}, using default: ${defaults.primary}`);
-    }
-    
-    // STEP 4: Handle service-only queries
-    else if (!detectedPlatform && detectedService) {
-        const serviceConfig = SERVICE_KEYWORDS[detectedService];
-        if (serviceConfig && serviceConfig.platforms.length > 0) {
-            // If service is specific to one platform
-            if (serviceConfig.platforms.length === 1) {
-                detectedPlatform = serviceConfig.platforms[0];
-                serviceConfidence = 0.8;
-                detected.matchType = 'service-specific';
-                console.log(`📌 Service-specific query: ${detectedService} → ${detectedPlatform}`);
-            } else {
-                detected.matchType = 'service-only-multi';
-                console.log(`📌 Service-only query: ${detectedService} (multiple platforms)`);
-            }
-        }
-    }
-    
-    // STEP 5: Handle combined platform+service queries
-    else if (detectedPlatform && detectedService) {
-        const serviceConfig = SERVICE_KEYWORDS[detectedService];
-        if (serviceConfig && !serviceConfig.platforms.includes(detectedPlatform)) {
-            console.log(`⚠️ Service ${detectedService} not available for ${detectedPlatform}`);
-            
+    // Determine match type and apply smart conversions
+    if (bestPlatform && bestService) {
+        // Check if service is compatible with platform, convert if needed
+        const serviceConfig = SERVICE_KEYWORDS[bestService];
+        if (serviceConfig && !serviceConfig.platforms.includes(bestPlatform)) {
+            console.log(`⚠️ Service ${bestService} not available for ${bestPlatform}`);
             // Smart conversion
-            if (detectedService === 'followers' && detectedPlatform === 'youtube') {
-                detectedService = 'subscribers';
+            if (bestService === 'followers' && bestPlatform === 'youtube') {
+                bestService = 'subscribers';
                 console.log(`🔄 Converted followers → subscribers for YouTube`);
-            } else if (detectedService === 'subscribers' && detectedPlatform !== 'youtube') {
-                detectedService = 'followers';
-                console.log(`🔄 Converted subscribers → followers for ${detectedPlatform}`);
+            } else if (bestService === 'subscribers' && bestPlatform !== 'youtube') {
+                bestService = 'followers';
+                console.log(`🔄 Converted subscribers → followers for ${bestPlatform}`);
             } else {
-                const defaults = PLATFORM_DEFAULTS[detectedPlatform];
-                detectedService = defaults.primary;
-                console.log(`🔄 Falling back to ${detectedPlatform} default: ${defaults.primary}`);
+                const defaults = PLATFORM_DEFAULTS[bestPlatform];
+                bestService = defaults.primary;
+                console.log(`🔄 Falling back to ${bestPlatform} default: ${defaults.primary}`);
             }
+            detected.service = bestService;
         }
         detected.matchType = 'combined';
+    } else if (bestPlatform && !bestService) {
+        const defaults = PLATFORM_DEFAULTS[bestPlatform];
+        bestService = defaults.primary;
+        detected.service = bestService;
+        detected.matchType = 'platform-only';
+        console.log(`📌 Platform-only query for ${bestPlatform}, using default: ${defaults.primary}`);
+    } else if (!bestPlatform && bestService) {
+        const serviceConfig = SERVICE_KEYWORDS[bestService];
+        if (serviceConfig && serviceConfig.platforms.length === 1) {
+            bestPlatform = serviceConfig.platforms[0];
+            detected.platform = bestPlatform;
+            detected.matchType = 'service-specific';
+            console.log(`📌 Service-specific query: ${bestService} → ${bestPlatform}`);
+        } else {
+            detected.matchType = 'service-only-multi';
+            console.log(`📌 Service-only query: ${bestService} (multiple platforms)`);
+        }
     }
-
-    // Set final values
-    detected.platform = detectedPlatform;
-    detected.service = detectedService;
-    detected.confidence = Math.max(platformConfidence, serviceConfidence);
 
     return detected;
 }
 
 
 /**
- * STRICT SERVICE CLASSIFIER (Prevents Mixed Results)
+ * SERVICE CLASSIFIER - identifies all service types in a service name
  */
 function classifyService(service) {
     const name = normalize(service.name || "");
@@ -436,7 +414,7 @@ function classifyService(service) {
 
 
 /**
- * SMART STRICT FILTERING SYSTEM
+ * SMART FILTERING SYSTEM - now allows multiple types per service
  */
 function filterServices(services, platform, serviceType) {
     if (!services || !services.length) return [];
@@ -474,7 +452,7 @@ function filterServices(services, platform, serviceType) {
 
         const classifiedTypes = classifyService(service);
 
-        // Must contain requested type
+        // Must contain requested type (allow multiple types)
         if (!classifiedTypes.includes(serviceLower)) {
             return false;
         }
@@ -484,9 +462,7 @@ function filterServices(services, platform, serviceType) {
             return false;
         }
 
-        // Removed bundle rejection and special rules to allow variations like story likes, comment likes, etc.
-        // Services with multiple types (e.g., story likes) are now accepted as long as they contain the requested type.
-
+        // All variations are accepted as long as they contain the requested type
         return true;
     });
 }
@@ -521,38 +497,46 @@ function getAppropriateServices(services, detected) {
 }
 
 /**
- * Get top services (lowest 3, highest 2) - FIXED with error handling
+ * Get diverse set of services covering all available service types
  */
-function getTopServices(services) {
+function getDiverseServices(services, maxResults = 10) {
     if (!services || services.length === 0) return [];
-    
-    try {
-        // Create a copy and sort by price
-        const sorted = [...services].sort((a, b) => {
-            const priceA = extractNumericPrice(a);
-            const priceB = extractNumericPrice(b);
-            
-            // Handle NaN values
-            if (isNaN(priceA) && isNaN(priceB)) return 0;
-            if (isNaN(priceA)) return 1;
-            if (isNaN(priceB)) return -1;
-            
-            return priceA - priceB;
-        });
-        
-        const lowest = sorted.slice(0, Math.min(3, sorted.length));
-        const highest = sorted.length > 3 ? sorted.slice(-2) : [];
-        
-        const combined = [...lowest, ...highest];
-        const unique = combined.filter((service, index, self) => 
-            index === self.findIndex(s => s.service_id === service.service_id)
-        );
-        
-        return unique;
-    } catch (error) {
-        console.error("❌ Error in getTopServices:", error);
-        return services.slice(0, 5); // Fallback to first 5 services
+    if (services.length <= maxResults) return services;
+
+    // Group by primary service type (first matched type)
+    const groups = new Map(); // type -> cheapest service of that type
+
+    services.forEach(service => {
+        const types = classifyService(service);
+        if (types.length === 0) return; // skip if no type detected (should not happen)
+        const primaryType = types[0]; // take first as primary
+        const price = extractNumericPrice(service);
+        if (!groups.has(primaryType) || price < extractNumericPrice(groups.get(primaryType))) {
+            groups.set(primaryType, service);
+        }
+    });
+
+    // Also collect most expensive overall (top 2 by price) to show premium options
+    const sortedByPriceDesc = [...services].sort((a, b) => extractNumericPrice(b) - extractNumericPrice(a));
+    const mostExpensive = sortedByPriceDesc.slice(0, 2);
+
+    // Combine unique services from groups and most expensive
+    const unique = new Map();
+    groups.forEach((service, type) => unique.set(service.service_id, service));
+    mostExpensive.forEach(service => unique.set(service.service_id, service));
+
+    let result = Array.from(unique.values());
+
+    // If we have fewer than maxResults, add more from original list (cheapest remaining)
+    if (result.length < maxResults) {
+        const remaining = services
+            .filter(s => !unique.has(s.service_id))
+            .sort((a, b) => extractNumericPrice(a) - extractNumericPrice(b));
+        result = result.concat(remaining.slice(0, maxResults - result.length));
     }
+
+    // Sort result by price ascending for display
+    return result.sort((a, b) => extractNumericPrice(a) - extractNumericPrice(b));
 }
 
 /**
@@ -625,8 +609,8 @@ module.exports = {
             
             console.log('\n📊 [SMM DETECTION] ==================');
             console.log('📝 Query    :', text);
-            console.log('📱 Platform :', detected.platform || '❌ Not detected');
-            console.log('🎯 Service  :', detected.service || '❌ Not detected');
+            console.log('📱 Platform :', detected.platform || '❌ Not detected', detected.platformKeyword ? `(via: ${detected.platformKeyword})` : '');
+            console.log('🎯 Service  :', detected.service || '❌ Not detected', detected.serviceKeyword ? `(via: ${detected.serviceKeyword})` : '');
             console.log('📊 Confidence:', (detected.confidence * 100).toFixed(1) + '%');
             console.log('🔍 Match Type:', detected.matchType);
             console.log('=====================================\n');
@@ -643,11 +627,11 @@ module.exports = {
             // Final fallback - show some services
             if (filtered.length === 0) {
                 console.log('ℹ️ No matches found, showing popular services');
-                filtered = services.slice(0, 10);
+                filtered = services.slice(0, 15);
             }
 
-            // Get top services to display
-            const selectedServices = getTopServices(filtered);
+            // Get diverse set of services to display all categories
+            const selectedServices = getDiverseServices(filtered, 10);
 
             // Build response message
             let messageText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
@@ -688,7 +672,7 @@ module.exports = {
             
             // Add match type info
             if (detected.matchType === 'platform-only') {
-                messageText += `✨ *Showing:* Popular ${detected.platform} services\n`;
+                messageText += `✨ *Showing:* Various ${detected.platform} services\n`;
             } else if (detected.matchType === 'service-only-multi') {
                 messageText += `✨ *Showing:* ${detected.service} services from all platforms\n`;
             }
