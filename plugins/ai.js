@@ -1211,52 +1211,129 @@ module.exports = {
             } catch {}
 
             // Fetch services
-            let services;
-            try {
-                services = await global.mmtServices.getServices();
-                if (!services?.length) return;
-            } catch {
-                return;
+let services;
+try {
+    services = await global.mmtServices.getServices();
+    if (!services?.length) return;
+} catch {
+    return;
+}
+
+// Detect platform and service from query
+const platform = detectPlatform(text);
+const service = detectService(text);
+
+console.log('\n📊 [SERVICE DETECTION] ==================');
+console.log('📝 Query    :', text);
+console.log('📱 Platform :', platform || '❌ Not detected');
+console.log('🎯 Service  :', service || '❌ Not detected');
+console.log('========================================\n');
+
+// NEW: Handle platform-only queries
+if (platform && !service) {
+    // Filter all services for this platform
+    let platformServices = services.filter(svc => {
+        const name = normalize(svc.name || "");
+        const platformKeywords = PLATFORM_KEYWORDS[platform] || [platform];
+        return platformKeywords.some(kw => name.includes(kw));
+    });
+    
+    // If we have platform services, sort by price and take 5 (mix of cheapest and varied)
+    if (platformServices.length > 0) {
+        // Sort by price
+        const sorted = [...platformServices].sort((a, b) => {
+            const priceA = extractNumericPrice(a);
+            const priceB = extractNumericPrice(b);
+            if (isNaN(priceA) && isNaN(priceB)) return 0;
+            if (isNaN(priceA)) return 1;
+            if (isNaN(priceB)) return -1;
+            return priceA - priceB;
+        });
+        
+        // Take 2 cheapest, 2 middle, and 1 expensive for variety
+        let selectedDefaults = [];
+        if (sorted.length >= 5) {
+            selectedDefaults = [
+                sorted[0], // cheapest
+                sorted[1], // second cheapest
+                sorted[Math.floor(sorted.length / 2)], // middle
+                sorted[sorted.length - 2], // second most expensive
+                sorted[sorted.length - 1] // most expensive
+            ];
+        } else {
+            selectedDefaults = sorted.slice(0, Math.min(5, sorted.length));
+        }
+        
+        // Build response for platform-only query
+        let messageText = "╭━━〔 🎯 *MMT SERVICES* 〕━━╮\n";
+        messageText += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+        const platformEmoji = {
+            tiktok: '🎵', instagram: '📷', facebook: '👤',
+            youtube: '▶️', whatsapp: '💬'
+        }[platform] || '📱';
+        
+        messageText += `${platformEmoji} *Platform:* ${platform.toUpperCase()}\n`;
+        messageText += `✨ *Showing:* Popular ${platform} services\n`;
+        messageText += `━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        selectedDefaults.forEach((svc, idx) => {
+            messageText += createServiceItem(svc, idx) + "\n\n";
+        });
+
+        messageText += `💡 *Tip:* Be more specific! Try "${platform} likes" or "${platform} followers"\n\n`;
+        messageText += `📞 *Support:* wa.me/94722136082\n`;
+        messageText += `🌐 *Website:* https://makemetrend.online\n`;
+        messageText += `╰━━━━━━━━━━━━━━━━━━━━━━╯`;
+
+        await conn.sendMessage(from, {
+            image: { url: serviceLogo },
+            caption: messageText,
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: channelJid,
+                    newsletterName: channelName,
+                    serverMessageId: -1
+                }
             }
+        }, { quoted: mek });
 
-            // Detect platform and service from query
-            const platform = detectPlatform(text);
-            const service = detectService(text);
+        console.log(`✅ [AI PLUGIN] Sent 5 default ${platform} services to ${from}`);
+        return;
+    }
+}
 
-            console.log('\n📊 [SERVICE DETECTION] ==================');
-            console.log('📝 Query    :', text);
-            console.log('📱 Platform :', platform || '❌ Not detected');
-            console.log('🎯 Service  :', service || '❌ Not detected');
-            console.log('========================================\n');
-
-            if (!platform || !service) {
-                // Show available options if incomplete query
-                let helpText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
-                helpText += "❌ *Please specify both platform and service*\n\n";
-                helpText += "📝 *Available Platforms:*\n";
-                helpText += "• Instagram (ig, insta)\n";
-                helpText += "• TikTok (tt, tik)\n";
-                helpText += "• Facebook (fb)\n";
-                helpText += "• YouTube (yt, tube)\n";
-                helpText += "• WhatsApp (wa)\n\n";
-                helpText += "📝 *Common Services:*\n";
-                helpText += "• followers, likes, views\n";
-                helpText += "• comments, shares, saves\n";
-                helpText += "• story, live, reel\n";
-                helpText += "• channel, reactions, watchtime\n\n";
-                helpText += "📝 *Examples:*\n";
-                helpText += "• instagram likes\n";
-                helpText += "• tiktok followers\n";
-                helpText += "• facebook page likes\n";
-                helpText += "• youtube subscribers\n";
-                helpText += "• whatsapp channel\n\n";
-                helpText += "📞 *Support:* wa.me/94722136082\n";
-                helpText += "🌐 *Website:* https://makemetrend.online\n";
-                helpText += "╰━━━━━━━━━━━━━━━━━━━━━━━━╯";
-                
-                await conn.sendMessage(from, { text: helpText }, { quoted: mek });
-                return;
-            }
+// Original logic for when both platform and service are detected or only service
+if (!platform || !service) {
+    // Show available options if incomplete query (but not platform-only, as that's handled above)
+    let helpText = "╭━━━〔 🎯 *SMM SERVICES* 〕━━━━╮\n\n";
+    helpText += "❌ *Please specify both platform and service*\n\n";
+    helpText += "📝 *Available Platforms:*\n";
+    helpText += "• Instagram (ig, insta)\n";
+    helpText += "• TikTok (tt, tik)\n";
+    helpText += "• Facebook (fb)\n";
+    helpText += "• YouTube (yt, tube)\n";
+    helpText += "• WhatsApp (wa)\n\n";
+    helpText += "📝 *Common Services:*\n";
+    helpText += "• followers, likes, views\n";
+    helpText += "• comments, shares, saves\n";
+    helpText += "• story, live, reel\n";
+    helpText += "• channel, reactions, watchtime\n\n";
+    helpText += "📝 *Examples:*\n";
+    helpText += "• instagram likes\n";
+    helpText += "• tiktok followers\n";
+    helpText += "• facebook page likes\n";
+    helpText += "• youtube subscribers\n";
+    helpText += "• whatsapp channel\n\n";
+    helpText += "📞 *Support:* wa.me/94722136082\n";
+    helpText += "🌐 *Website:* https://makemetrend.online\n";
+    helpText += "╰━━━━━━━━━━━━━━━━━━━━━━━━╯";
+    
+    await conn.sendMessage(from, { text: helpText }, { quoted: mek });
+    return;
+}
 
             // Filter by category using complete category lists
             let filtered = filterByCategory(services, platform, service);
