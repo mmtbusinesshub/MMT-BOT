@@ -104,30 +104,29 @@ ${selectedBank.details}
       const isBankQuery = bankKeywords.some(k => msg.includes(k));
       if (!isBankQuery) return;
 
-      await sendInteractiveMessage(conn, from, {
-        image: { url: serviceLogo },
-        title: "🏦 BANK DETAILS",
-        text: `🏦 *BANK DETAILS REQUEST*
-
-⭕ Tap button to get full details`,
-        footer: "Choose your bank:",
-        interactiveButtons: [
-          {
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({
-              display_text: '🇱🇰 HNB Bank',
-              id: 'bank_hnb'
-            })
-          },
-          {
-            name: 'quick_reply',
-            buttonParamsJson: JSON.stringify({
-              display_text: '🇱🇰 BOC Bank',
-              id: 'bank_boc'
-            })
-          }
-        ]
-      }, { quoted: mek });
+await sendInteractiveMessage(conn, from, {
+  image: { url: serviceLogo },
+  title: "🏦 BANK DETAILS",
+  text: buttonText,
+  footer: "Choose your bank:",
+  aimode: true, // 🔥 ADD THIS
+  interactiveButtons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({
+        display_text: '🇱🇰 HNB Bank',
+        id: 'bank_hnb'
+      })
+    },
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({
+        display_text: '🇱🇰 BOC Bank',
+        id: 'bank_boc'
+      })
+    }
+  ]
+}, { quoted: mek });
 
     } catch (err) {
       console.log("❌ Bank Plugin Error:", err);
