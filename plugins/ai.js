@@ -571,6 +571,9 @@ function filterByCategory(services, platform, service) {
     // Get platform keywords
     const platformKeywords = platformLower ? PLATFORM_KEYWORDS[platformLower] || [platformLower] : null;
     
+    // Get service keywords
+    const serviceKeywords = serviceLower ? (SERVICE_KEYWORDS[serviceLower] || [serviceLower]) : [];
+    
     // Filter services
     let filtered = services.filter(svc => {
         const category = svc.category || "";
