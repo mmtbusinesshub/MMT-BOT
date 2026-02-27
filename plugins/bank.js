@@ -1,4 +1,4 @@
-const { sendButtons, sendInteractiveMessage } = require('gifted-btns');
+const { sendInteractiveMessage } = require('gifted-btns');
 
 const channelJid = '120363423526129509@newsletter'; 
 const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡'; 
@@ -31,9 +31,15 @@ const bankKeywords = [
   'pay', 'payment method', 'bank account', 'account number'
 ];
 
+// Store connection reference for event handler
+let socket = null;
+
 module.exports = {
   onMessage: async (conn, mek) => {
     try {
+      // Store socket reference
+      socket = conn;
+      
       const key = mek.key;
       const content = mek.message;
       if (!content || key.fromMe) return;
@@ -64,17 +70,25 @@ module.exports = {
             key: mek.key,
           }
         });
-        console.log("🏦 [MMT BANK] Reacted to bank query");
-      } catch (reactError) {
-        console.log("⚠️ [MMT BANK] Could not react to message:", reactError.message);
-      }
+      } catch (reactError) {}
 
-      // Send bank selection with buttons
+      // Send bank selection with buttons AND preserve 3-language descriptions
+      const buttonText = `🏦 *BANK DETAILS REQUEST*
+────────────────────
+🇱🇰 *HNB Bank* - Tap button below
+🇱🇰 *BOC Bank* - Tap button below
+────────────────────
+⭕ *Simply tap the button to get complete details.*
+
+⭕ *සම්පූර්න බැන්කු විස්තර ලබාගන්න පහත බටනය ඔබන්න.*
+
+⭕ *முழுமையான வங்கி விவரங்களைப் பெற, கீழே உள்ள பொத்தானைத் தட்டவும்.*`;
+
       await sendInteractiveMessage(conn, from, {
         image: { url: serviceLogo },
         title: "🏦 BANK DETAILS",
-        text: "Please select a bank to receive payment details:\n\n🇱🇰 *HNB Bank* - HNB\n🇱🇰 *BOC Bank* - BOC",
-        footer: "Choose your bank below:",
+        text: buttonText,
+        footer: "Choose your bank:",
         interactiveButtons: [
           {
             name: 'quick_reply',
@@ -108,85 +122,99 @@ module.exports = {
   },
 };
 
-// Handle button responses
-if (conn.ev) {
-  conn.ev.on('messages.upsert', async ({ messages }) => {
-    for (const msg of messages) {
-      if (!msg.message) continue;
+// Handle button responses - FIXED with socket reference
+if (typeof window === 'undefined' && !socket) {
+  // Wait for socket to be available
+  const checkSocket = setInterval(() => {
+    if (socket) {
+      clearInterval(checkSocket);
       
-      const key = msg.key;
-      const from = key.remoteJid;
-      
-      // Check for button responses
-      const buttonResponse = 
-        msg.message.buttonsResponseMessage ||
-        msg.message.interactiveResponseMessage ||
-        msg.message.listResponseMessage;
-      
-      if (buttonResponse) {
-        let selectedId = '';
-        
-        // Extract selected button ID based on response type
-        if (msg.message.buttonsResponseMessage) {
-          selectedId = msg.message.buttonsResponseMessage.selectedButtonId;
-        } else if (msg.message.interactiveResponseMessage) {
-          selectedId = msg.message.interactiveResponseMessage.nativeFlowResponseMessage?.paramsJson;
-          if (selectedId) {
-            try {
-              const parsed = JSON.parse(selectedId);
-              selectedId = parsed.id || parsed.selectedId || selectedId;
-            } catch {
-              // Keep as is
+      socket.ev?.on('messages.upsert', async ({ messages }) => {
+        for (const msg of messages) {
+          if (!msg.message) continue;
+          
+          const key = msg.key;
+          const from = key.remoteJid;
+          
+          // Check for button responses
+          const buttonResponse = 
+            msg.message.buttonsResponseMessage ||
+            msg.message.interactiveResponseMessage;
+          
+          if (buttonResponse) {
+            let selectedId = '';
+            
+            // Extract selected button ID
+            if (msg.message.buttonsResponseMessage) {
+              selectedId = msg.message.buttonsResponseMessage.selectedButtonId;
+            } else if (msg.message.interactiveResponseMessage) {
+              const responseMsg = msg.message.interactiveResponseMessage;
+              if (responseMsg.nativeFlowResponseMessage?.paramsJson) {
+                try {
+                  const parsed = JSON.parse(responseMsg.nativeFlowResponseMessage.paramsJson);
+                  selectedId = parsed.id || '';
+                } catch {}
+              }
+            }
+            
+            console.log("🏦 [MMT BANK] Button selected:", selectedId);
+            
+            // Handle bank selection
+            if (selectedId === 'bank_hnb') {
+              const selectedBank = bankDetails['hnb'];
+              const bankMessage = `🏦 *PAYMENT DETAILS*
+────────────────────
+${selectedBank.icon} *${selectedBank.name}*
+────────────────────
+${selectedBank.details}
+────────────────────
+📞 *Support:* wa.me/94722136082`;
+
+              await socket.sendMessage(from, {
+                image: { url: serviceLogo },
+                caption: bankMessage,
+                contextInfo: {
+                  forwardingScore: 999,
+                  isForwarded: true,
+                  forwardedNewsletterMessageInfo: {
+                    newsletterJid: channelJid,
+                    newsletterName: channelName,
+                    serverMessageId: -1
+                  }
+                }
+              });
+              
+              console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
+              
+            } else if (selectedId === 'bank_boc') {
+              const selectedBank = bankDetails['boc'];
+              const bankMessage = `🏦 *PAYMENT DETAILS*
+────────────────────
+${selectedBank.icon} *${selectedBank.name}*
+────────────────────
+${selectedBank.details}
+────────────────────
+📞 *Support:* wa.me/94722136082`;
+
+              await socket.sendMessage(from, {
+                image: { url: serviceLogo },
+                caption: bankMessage,
+                contextInfo: {
+                  forwardingScore: 999,
+                  isForwarded: true,
+                  forwardedNewsletterMessageInfo: {
+                    newsletterJid: channelJid,
+                    newsletterName: channelName,
+                    serverMessageId: -1
+                  }
+                }
+              });
+              
+              console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
             }
           }
-        } else if (msg.message.listResponseMessage) {
-          selectedId = msg.message.listResponseMessage.singleSelectReply?.selectedRowId;
         }
-        
-        console.log("🏦 [MMT BANK] Button selected:", selectedId);
-        
-        // Handle bank selection
-        if (selectedId === 'bank_hnb') {
-          const selectedBank = bankDetails['hnb'];
-          const bankMessage = `🏦 *PAYMENT DETAILS*\n────────────────────\n${selectedBank.icon} *${selectedBank.name}*\n────────────────────\n${selectedBank.details}\n────────────────────\n📞 *Support:* wa.me/94722136082`;
-
-          await conn.sendMessage(from, {
-            image: { url: serviceLogo },
-            caption: bankMessage,
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: channelJid,
-                newsletterName: channelName,
-                serverMessageId: -1
-              }
-            }
-          });
-          
-          console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
-          
-        } else if (selectedId === 'bank_boc') {
-          const selectedBank = bankDetails['boc'];
-          const bankMessage = `🏦 *PAYMENT DETAILS*\n────────────────────\n${selectedBank.icon} *${selectedBank.name}*\n────────────────────\n${selectedBank.details}\n────────────────────\n📞 *Support:* wa.me/94722136082`;
-
-          await conn.sendMessage(from, {
-            image: { url: serviceLogo },
-            caption: bankMessage,
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: channelJid,
-                newsletterName: channelName,
-                serverMessageId: -1
-              }
-            }
-          });
-          
-          console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
-        }
-      }
+      });
     }
-  });
+  }, 1000);
 }
