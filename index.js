@@ -349,49 +349,28 @@ async function connectToWA() {
 
     const m = sms(conn, mek);
     const type = getContentType(mek.message);
-    const body = (type === 'conversation') ? mek.message.conversation :
-      (type === 'extendedTextMessage') ? mek.message.extendedTextMessage.text :
-        (type == 'imageMessage' && mek.message.imageMessage.caption) ? mek.message.imageMessage.caption :
-          (type == 'videoMessage' && mek.message.videoMessage.caption) ? mek.message.videoMessage.caption : '';
-    const buttonResponse = mek.message.buttonsResponseMessage ||
-                          mek.message.interactiveResponseMessage ||
-                          mek.message.listResponseMessage;
-
-    if (buttonResponse) {
-      console.log("🔘 [BUTTON HANDLER] Button response detected");
-      
-      let selectedId = '';
-      let selectedDisplayText = '';
-      
-      // Extract button ID based on response type
-      if (mek.message.buttonsResponseMessage) {
-        // Legacy buttons
-        selectedId = mek.message.buttonsResponseMessage.selectedButtonId;
-        selectedDisplayText = mek.message.buttonsResponseMessage.selectedDisplayText;
-        console.log(`🔘 [BUTTON HANDLER] Legacy button clicked: ${selectedId} - ${selectedDisplayText}`);
-      } 
-      else if (mek.message.interactiveResponseMessage) {
-        // Interactive/native flow buttons
-        const nativeResponse = mek.message.interactiveResponseMessage.nativeFlowResponseMessage;
-        if (nativeResponse?.paramsJson) {
-          try {
-            const parsed = JSON.parse(nativeResponse.paramsJson);
-            selectedId = parsed.id || '';
-            selectedDisplayText = parsed.display_text || '';
-            console.log(`🔘 [BUTTON HANDLER] Interactive button clicked: ${selectedId} - ${selectedDisplayText}`);
-          } catch (e) {
-            console.log("❌ [BUTTON HANDLER] Failed to parse interactive response:", e);
-          }
-        }
-      } 
-      else if (mek.message.listResponseMessage) {
-        // List response
-        selectedId = mek.message.listResponseMessage.singleSelectReply?.selectedRowId;
-        selectedDisplayText = mek.message.listResponseMessage.title || '';
-        console.log(`🔘 [BUTTON HANDLER] List item selected: ${selectedId} - ${selectedDisplayText}`);
+  const body =
+    (type === 'conversation') ? mek.message.conversation :
+    (type === 'extendedTextMessage') ? mek.message.extendedTextMessage.text :
+    (type === 'templateButtonReplyMessage') ? mek.message.templateButtonReplyMessage?.selectedId :
+    (type === 'interactiveResponseMessage') ? (() => {
+      try {
+        const json = JSON.parse(
+          mek.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson
+        );
+        return json?.id || '';
+      } catch {
+        return '';
       }
-      
-    }
+    })() :
+    (type === 'imageMessage') ? mek.message.imageMessage?.caption :
+    (type === 'videoMessage') ? mek.message.videoMessage?.caption :
+    m.msg?.text ||
+    m.msg?.conversation ||
+    m.msg?.caption ||
+    m.msg?.selectedButtonId ||
+    m.msg?.singleSelectReply?.selectedRowId ||
+    '';
     const isCmd = body.startsWith(prefix);
     const commandName = isCmd ? body.slice(prefix.length).trim().split(" ")[0].toLowerCase() : '';
     const args = body.trim().split(/ +/).slice(1);
