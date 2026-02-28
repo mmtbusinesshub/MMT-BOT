@@ -24,36 +24,31 @@ async (danuwamd, mek, m, {
 
         // If no arguments, show current config
         if (!args.length) {
-            let configStatus = `╭━━〔 ⚙️ *SYSTEM CONFIGURATION* 〕━━╮
-┃━━━━━━━━━━━━━━━━━━━━━
-┃ 📊 *Current Settings:*
-┃━━━━━━━━━━━━━━━━━━━━━
-┃ 🤖 *MODE:* ${config.MODE}
-┃ 👑 *BOT OWNER:* ${config.BOT_OWNER}
-┃ 📱 *OWNER NUMBERS:* ${config.ownerNumber.join(', ')}
-┃━━━━━━━━━━━━━━━━━━━━━
-┃ 📸 *ALIVE IMG:* ${config.ALIVE_IMG.substring(0, 30)}...
-┃ 💬 *ALIVE MSG:* ${config.ALIVE_MSG || 'Not set'}
-┃━━━━━━━━━━━━━━━━━━━━━
-┃ 🔄 *AUTO STATUS SEEN:* ${config.AUTO_STATUS_SEEN}
-┃ ❤️ *AUTO STATUS REACT:* ${config.AUTO_STATUS_REACT}
-┃ 💭 *AUTO STATUS REPLY:* ${config.AUTO_STATUS_REPLY}
-┃━━━━━━━━━━━━━━━━━━━━━
-┃ 🔑 *SESSION ID:* ${config.SESSION_ID.substring(0, 15)}...
-┃ 🗝️ *API KEY:* ${config.MMT_API_KEY.substring(0, 10)}...
-╰━━━━━━━━━━━━━━━━━━━━━╯
-
-📝 *Usage:*
-.system mode public|private|inbox
-.system aliveimg <image_url>
-.system alivemsg <message>
-.system botowner <number>
-.system addowner <number>
-.system removeowner <number>
-.system autoreact true|false
-.system autoreply true|false
-.system autoseen true|false
-.system apikey <new_key>`;
+            let configStatus = `╭━━〔 ⚙️ SYSTEM CONTROL PANEL 〕━━╮
+┃
+┃ 📌 *Mode Control*
+┃   • .system mode public
+┃   • .system mode private
+┃   • .system mode inbox
+┃
+┃ 🟢 *Alive Settings*
+┃   • .system aliveimg <image_url>
+┃   • .system alivemsg <message>
+┃
+┃ 👑 *Owner Management*
+┃   • .system botowner <number>
+┃   • .system addowner <number>
+┃   • .system removeowner <number>
+┃
+┃ 🔄 *Auto Status Controls*
+┃   • .system autoseen true|false
+┃   • .system autoreact true|false
+┃   • .system autoreply true|false
+┃
+┃ 🔑 *API Configuration*
+┃   • .system apikey <new_key>
+┃
+╰━━━━━━━━━━━━━━━━━━━━━━╯`;
 
             return reply(configStatus);
         }
