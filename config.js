@@ -16,14 +16,15 @@ const defaultConfig = {
   AUTO_STATUS_SEEN: "true",
   MODE: "inbox", // 'private', 'public'
   MMT_API_KEY: "529e5c3a2253bf93a5d9c2e104a3b498",
+  ALLOWED_GROUPS: ["120363407450693131@g.us"], // Add your allowed group JIDs here
 };
 
 //*******************************************************************************************************************************************************
 
 module.exports = {
   AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT || defaultConfig.AUTO_STATUS_REACT,
-  AUTO_STATUS_REACT: process.env.AUTO_STATUS_REPLY|| defaultConfig.AUTO_STATUS_REPLY,
-  AUTO_STATUS_REACT: process.env.AUTO_STATUS_SEEN || defaultConfig.AUTO_STATUS_SEEN,
+  AUTO_STATUS_REPLY: process.env.AUTO_STATUS_REPLY || defaultConfig.AUTO_STATUS_REPLY,
+  AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN || defaultConfig.AUTO_STATUS_SEEN,
   MMT_API_KEY: process.env.MMT_API_KEY || defaultConfig.MMT_API_KEY,
   SESSION_ID: process.env.SESSION_ID || defaultConfig.SESSION_ID,
   ALIVE_IMG: process.env.ALIVE_IMG || defaultConfig.ALIVE_IMG,
@@ -32,7 +33,9 @@ module.exports = {
   ownerNumber: process.env.ownerNumber
     ? process.env.ownerNumber.split(",")
     : defaultConfig.ownerNumber,
+  ALLOWED_GROUPS: process.env.ALLOWED_GROUPS
+    ? process.env.ALLOWED_GROUPS.split(",")
+    : defaultConfig.ALLOWED_GROUPS,
   AUTO_READ_STATUS: convertToBool(process.env.AUTO_READ_STATUS, defaultConfig.AUTO_READ_STATUS),
   MODE: process.env.MODE || defaultConfig.MODE,
-
 };
