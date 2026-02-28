@@ -40,6 +40,12 @@ async (danuwamd, mek, m, {
 ┃   • .system addowner <number>
 ┃   • .system removeowner <number>
 ┃
+┃ 👥 *Group Management (Inbox Mode)*
+┃   • .system addgroup <jid>
+┃   • .system removegroup <jid>
+┃   • .system listgroups
+┃   • .system cleargroups
+┃
 ┃ 🔄 *Auto Status Controls*
 ┃   • .system autoseen true|false
 ┃   • .system autoreact true|false
@@ -110,14 +116,69 @@ async (danuwamd, mek, m, {
                 if (!value.match(/^\d+$/)) {
                     return reply("❌ *Please provide a valid phone number*");
                 }
-                const index = config.ownerNumber.indexOf(value);
-                if (index > -1) {
-                    config.ownerNumber.splice(index, 1);
+                const ownerIndex = config.ownerNumber.indexOf(value);
+                if (ownerIndex > -1) {
+                    config.ownerNumber.splice(ownerIndex, 1);
                     updateEnvFile('ownerNumber', config.ownerNumber.join(','));
                     reply(`✅ *Removed owner:* ${value}\n👥 *Current owners:* ${config.ownerNumber.join(', ')}`);
                 } else {
                     reply(`❌ *${value} is not in owners list*`);
                 }
+                break;
+
+            // Group Management Commands
+            case 'addgroup':
+                if (!value || !value.includes('@g.us')) {
+                    return reply("❌ *Please provide a valid group JID (ends with @g.us)*");
+                }
+                if (!config.ALLOWED_GROUPS) {
+                    config.ALLOWED_GROUPS = [];
+                }
+                if (!config.ALLOWED_GROUPS.includes(value)) {
+                    config.ALLOWED_GROUPS.push(value);
+                    updateEnvFile('ALLOWED_GROUPS', config.ALLOWED_GROUPS.join(','));
+                    reply(`✅ *Added group:*\n\`${value}\`\n\n📝 *Total allowed groups:* ${config.ALLOWED_GROUPS.length}`);
+                } else {
+                    reply(`❌ *Group already in allowed list*`);
+                }
+                break;
+
+            case 'removegroup':
+                if (!value) {
+                    return reply("❌ *Please provide a group JID to remove*");
+                }
+                if (!config.ALLOWED_GROUPS) {
+                    config.ALLOWED_GROUPS = [];
+                }
+                const groupIndex = config.ALLOWED_GROUPS.indexOf(value);
+                if (groupIndex > -1) {
+                    config.ALLOWED_GROUPS.splice(groupIndex, 1);
+                    updateEnvFile('ALLOWED_GROUPS', config.ALLOWED_GROUPS.join(','));
+                    reply(`✅ *Removed group:*\n\`${value}\`\n\n📝 *Remaining groups:* ${config.ALLOWED_GROUPS.length}`);
+                } else {
+                    reply(`❌ *Group not found in allowed list*`);
+                }
+                break;
+
+            case 'listgroups':
+                if (!config.ALLOWED_GROUPS || config.ALLOWED_GROUPS.length === 0) {
+                    return reply("📭 *No groups in allowed list*");
+                }
+                let groupList = `╭━━〔 👥 ALLOWED GROUPS 〕━━╮\n┃\n`;
+                config.ALLOWED_GROUPS.forEach((jid, index) => {
+                    groupList += `┃ ${index + 1}. \`${jid}\`\n`;
+                });
+                groupList += `┃\n┃ 📊 *Total:* ${config.ALLOWED_GROUPS.length} groups\n╰━━━━━━━━━━━━━━━━━━╯`;
+                reply(groupList);
+                break;
+
+            case 'cleargroups':
+                if (!config.ALLOWED_GROUPS || config.ALLOWED_GROUPS.length === 0) {
+                    return reply("📭 *No groups to clear*");
+                }
+                config.ALLOWED_GROUPS = [];
+                updateEnvFile('ALLOWED_GROUPS', '');
+                reply(`✅ *Cleared all allowed groups*`);
                 break;
 
             case 'autoreact':
@@ -191,7 +252,7 @@ function updateEnvFile(key, value) {
         fs.writeFileSync(envPath, envContent.trim());
         console.log(`📝 [SYSTEM] Updated ${key} in config.env`);
 
-        // Also update config.js if needed (but changes will persist in .env)
+        // Also update config.js if needed
         const configPath = path.join(__dirname, '../config.js');
         let configContent = fs.readFileSync(configPath, 'utf8');
         
