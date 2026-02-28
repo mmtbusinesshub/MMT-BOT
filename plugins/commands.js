@@ -170,13 +170,7 @@ async (sock, mek, m, {
 • Use .system alone to see the full control panel
 • For group adds, make sure numbers include country code (+)
 
-*• To add members to groups follow this flow.* 
-  *get group jid using .groupjid plugin and select the group you want the jid*
-  *from the button menu. it gives you a copy button to copy the group jid*
-  *and after getting group jid use .system addgroup (paste the copied jid)*
-  *after that it will add your group to the bot system and after that*
-  *use .groupadd (add numbers you want like .groupadd +94776121326, +94774915917, +94771234567)*
-  *after that bot will add that members to your group.*
+*• To add members to groups follow this flow. get group jid using .groupjid plugin and select the group you want the jid from the button menu. it gives you a copy button to copy the group jid and after getting group jid use .system addgroup (paste the copied jid) after that it will add your group to the bot system and after that use .groupadd (add numbers you want like .groupadd +94776121326, +94774915917, +94771234567). after that bot will add that members to your group.*
 `;
 
         await sock.sendMessage(from, {
