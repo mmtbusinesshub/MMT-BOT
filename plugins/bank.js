@@ -3,6 +3,7 @@ const { sendInteractiveMessage } = require('gifted-btns');
 const channelJid = '120363423526129509@newsletter'; 
 const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡'; 
 const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
+const binanceQrImage = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/binance-pay.jpeg?raw=true";
 
 const bankDetails = {
   'hnb': {
@@ -32,6 +33,15 @@ const bankDetails = {
 ⚠️ *Note:* Please add an extra Rs. 20/= for eZ Cash payments.`,
     emoji: '💵',
     icon: '💵'
+  },
+  'binance': {
+    name: 'BINANCE PAY',
+    shortName: 'Binance',
+    details: `📱 *BINANCE ID:* 777584619
+
+💳 *Scan the QR code above to pay*`,
+    emoji: '📱',
+    icon: '📱'
   }
 };
 
@@ -39,7 +49,7 @@ const bankKeywords = [
   'bank', 'payment', 'transfer', 'deposit', 
   'payment details', 'bank details', 'send money',
   'pay', 'payment method', 'bank account', 'account number',
-  'ezcash', 'ez cash', 'cash', 'ez'
+  'ezcash', 'ez cash', 'cash', 'ez', 'binance', 'crypto'
 ];
 
 module.exports = {
@@ -83,6 +93,7 @@ module.exports = {
 🇱🇰 *HNB Bank*
 🇱🇰 *BOC Bank*
 💵 *EZ Cash*
+📱 *Binance Pay*
 ────────────────────
 ⭕ *Simply tap the button to get complete details.*
 
@@ -118,10 +129,17 @@ module.exports = {
             })
           },
           {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({
+              display_text: '📱 Binance Pay',
+              id: 'bank_binance'
+            })
+          },
+          {
             name: 'cta_url',
             buttonParamsJson: JSON.stringify({
               display_text: '📞 Contact Support',
-              url: 'https://wa.me/94722136082'
+              url: 'https://wa.me/94771056082'
             })
           }
         ]
@@ -159,7 +177,7 @@ ${selectedBank.details}
               name: 'cta_url',
               buttonParamsJson: JSON.stringify({
                 display_text: '📞 Contact Support',
-                url: 'https://wa.me/94722136082'
+                url: 'https://wa.me/94771056082'
               })
             }
           ]
@@ -188,7 +206,7 @@ ${selectedBank.details}
               name: 'cta_url',
               buttonParamsJson: JSON.stringify({
                 display_text: '📞 Contact Support',
-                url: 'https://wa.me/94722136082'
+                url: 'https://wa.me/94771056082'
               })
             }
           ]
@@ -215,13 +233,41 @@ ${selectedBank.details}
               name: 'cta_url',
               buttonParamsJson: JSON.stringify({
                 display_text: '📞 Contact Support',
-                url: 'https://wa.me/94722136082'
+                url: 'https://wa.me/94771056082'
               })
             }
           ]
         });
         
         console.log(`🏦 [MMT BANK] Sent EZ Cash details`);
+        
+      } else if (selectedId === 'bank_binance') {
+        const selectedBank = bankDetails['binance'];
+        const binanceMessage = `📱 *BINANCE PAY*
+────────────────────
+*BINANCE ID:* 777584619
+────────────────────
+📸 *Scan the QR code above to pay*
+⏱️ *Please send payment screenshot after transfer*`;
+
+        // Send with Binance QR image (not service logo) and contact button
+        await sendInteractiveMessage(conn, from, {
+          image: { url: binanceQrImage },
+          title: "📱 BINANCE PAY",
+          text: binanceMessage,
+          footer: "Need help? Contact support:",
+          interactiveButtons: [
+            {
+              name: 'cta_url',
+              buttonParamsJson: JSON.stringify({
+                display_text: '📞 Contact Support',
+                url: 'https://wa.me/94771056082'
+              })
+            }
+          ]
+        });
+        
+        console.log(`🏦 [MMT BANK] Sent Binance Pay details with QR code`);
       }
     } catch (error) {
       console.error("❌ [MMT BANK] Error handling button response:", error);
