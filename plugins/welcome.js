@@ -92,8 +92,18 @@ async function handleGroupParticipantUpdate(conn, update) {
         
         console.log(`👥 [WELCOME PLUGIN] New member added to your group:`, participants);
         
-        for (const participantJid of participants) {
+        for (const participant of participants) {
             try {
+                // Extract JID properly - participant could be string or object
+                const participantJid = typeof participant === 'string' 
+                    ? participant 
+                    : participant.jid || participant.id || Object.values(participant)[0];
+                
+                if (!participantJid || !participantJid.includes('@')) {
+                    console.log(`⚠️ Invalid participant format:`, participant);
+                    continue;
+                }
+                
                 // Check if user needs welcome
                 if (!needsWelcome(participantJid)) continue;
                 
@@ -107,9 +117,10 @@ async function handleGroupParticipantUpdate(conn, update) {
                 } catch {}
                 
                 const greeting = getTimeGreeting();
+                const mentionName = participantJid.split('@')[0];
                 
                 // Simple test message first
-                const testMessage = `👋 Welcome to the group, @${participantJid.split('@')[0]}!`;
+                const testMessage = `👋 Welcome to the group, @${mentionName}!`;
                 
                 console.log(`📤 Sending welcome to ${participantJid}`);
                 
@@ -120,29 +131,37 @@ async function handleGroupParticipantUpdate(conn, update) {
                 });
                 
                 // If test works, then send full message
-                const fullMessage = 
-`╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
+                const fullMessage = `
+╭━〔 🎉 *WELCOME TO MMT* 〕━╮
 ┃━━━━━━━━━━━━━━━━━━━━━
-┃ ${greeting}, @${participantJid.split('@')[0]}! 
+┃ ${greeting}, *${userName}!*
 ┃
-┃ 👋 *Welcome to MMT Business Hub!*
+┃ 👋 *Thanks for messaging us!*
 ┃ 🤖 *I'm your AI Business Assistant*
 ┃━━━━━━━━━━━━━━━━━━━━━━━
 ┃ 📌 *WHAT YOU CAN GET HERE:*
 ┃
 ┃ 💳 *BANK DETAILS*
 ┃ • Type *bank details* to see all payment methods
+┃ • HNB, BOC, EZ Cash, Binance Pay
 ┃
 ┃ 🚀 *SERVICE DETAILS*
 ┃ • Type *tiktok followers* 
 ┃ • Type *instagram likes*
+┃ • Type *facebook page views*
+┃ • Type *youtube subscribers*
+┃ • Type *whatsapp channel*
 ┃
 ┃ 👑 *ADMIN DETAILS*
 ┃ • Type *admin details* for contact info
+┃ • Support team ready to help
 ┃
 ┃ 🌐 *HOSTING DETAILS*
 ┃ • Type *hosting* to see our plans
-╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
+┃ • Fast & reliable web hosting
+╰━━━━━━━━━━━━━━━━━━━━━━━╯
+
+💫 *We're here to help grow your business!*`;
 
                 await conn.sendMessage(id, {
                     text: fullMessage,
@@ -153,7 +172,7 @@ async function handleGroupParticipantUpdate(conn, update) {
                 console.log(`✅ [WELCOME PLUGIN] Sent welcome to ${participantJid}`);
                 
             } catch (err) {
-                console.error(`❌ Error sending to ${participantJid}:`, err);
+                console.error(`❌ Error sending to participant:`, err);
             }
         }
     } catch (err) {
