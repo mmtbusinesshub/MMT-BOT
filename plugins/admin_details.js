@@ -1,6 +1,6 @@
 const { sendButtons } = require('gifted-btns');
 
-const adminImage = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/admin-details.jpg?raw=true";
+const adminImage = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/admin-girl-image.jpg?raw=true";
 const adminNumber = "94771056082"; 
 const adminWhatsAppLink = `https://wa.me/${adminNumber}`;
 
@@ -32,7 +32,7 @@ module.exports = {
       await sendButtons(conn, key.remoteJid, {
         image: { url: adminImage },
         title: "🛠️ *ADMIN CONTACT*",
-        text: "You can reach out to the admin for support or inquiries.\n\n⭕ *Name:* M.I.M. IFLAJ\n⭕ *Phone:* +94771056082\n⭕ *Role:* Founder of MMT BUSINESS HUB",
+        text: "You can reach out to the admin for support or inquiries.\n\n⭕ *Name:* G.G.Y Ashinsana\n⭕ *Phone:* +94771056082\n⭕ *Role:* Admin of MMT BUSINESS HUB",
         footer: "Click the button below to chat with admin",
         aimode: false, // Set to false for standard buttons
         buttons: [
