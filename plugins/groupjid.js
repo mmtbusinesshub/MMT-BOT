@@ -2,12 +2,12 @@ const { cmd } = require('../command');
 
 cmd({
     pattern: "groupjid",
-    desc: "Get current group JID (Owner only)",
+    desc: "Get group JIDs (Owner only - Private use)",
     category: "owner",
     filename: __filename
 },
 async (danuwamd, mek, m, {
-    from, isGroup, isOwner, groupMetadata, reply
+    from, isGroup, isOwner, reply
 }) => {
     try {
 
@@ -16,28 +16,28 @@ async (danuwamd, mek, m, {
             return reply("❌ *This command is only for bot owners!*");
         }
 
-        // Must be used inside a group
-        if (!isGroup) {
-            return reply("❌ *This command can only be used inside a group!*");
+        // Must be used in private chat
+        if (isGroup) {
+            return reply("❌ *Use this command in private chat only!*");
         }
 
-        const groupName = groupMetadata.subject;
-        const groupJid = from;
+        // Get all groups bot participates in
+        const groups = await danuwamd.groupFetchAllParticipating();
 
-        let caption = `
-╭━━〔 📌 GROUP JID FINDER 〕━━╮
-┃
-┃ 🏷️ *Group Name:*
-┃ ${groupName}
-┃
-┃ 🆔 *Group JID:*
-┃ ${groupJid}
-┃
-╰━━━━━━━━━━━━━━━━━━━━━━╯
+        if (!groups || Object.keys(groups).length === 0) {
+            return reply("❌ Bot is not in any groups.");
+        }
 
-📋 Copy the JID carefully.
-🔒 Owner Only Command
-`;
+        let caption = `╭━━〔 📌 GROUP JID LIST 〕━━╮\n┃\n`;
+
+        let index = 1;
+        for (let jid in groups) {
+            caption += `┃ ${index}. ${groups[jid].subject}\n`;
+            caption += `┃    🆔 ${jid}\n┃\n`;
+            index++;
+        }
+
+        caption += `╰━━━━━━━━━━━━━━━━━━━━━━╯\n\n🔒 Owner Only`;
 
         await reply(caption);
 
