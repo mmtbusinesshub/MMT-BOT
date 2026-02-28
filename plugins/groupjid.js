@@ -1,7 +1,7 @@
 const { cmd } = require('../command');
 const { sendInteractiveMessage } = require('gifted-btns');
 
-// Temporary memory store per user
+// Temporary cache per owner
 const groupCache = new Map();
 
 cmd({
@@ -17,6 +17,7 @@ async (sock, mek, m, {
     isGroup,
     reply
 }) => {
+
     try {
 
         // 🔒 Owner check
@@ -29,14 +30,13 @@ async (sock, mek, m, {
             return reply("❌ Use this command in private chat.");
         }
 
-        // Fetch groups
         const groups = await sock.groupFetchAllParticipating();
 
         if (!groups || Object.keys(groups).length === 0) {
             return reply("❌ Bot is not participating in any groups.");
         }
 
-        // Store groups per owner session
+        // Store session cache
         groupCache.set(sender, groups);
 
         let rows = [];
@@ -49,7 +49,6 @@ async (sock, mek, m, {
             });
         }
 
-        // Send interactive single select
         await sendInteractiveMessage(sock, from, {
             text: "📌 Select a group to get its JID",
             footer: "MMT Business Hub • Owner Panel",
@@ -72,5 +71,57 @@ async (sock, mek, m, {
     } catch (err) {
         console.log(err);
         reply(`❌ Error: ${err.message}`);
+    }
+});
+
+
+/* =======================================================
+   🔥 INTERACTIVE RESPONSE HANDLER (INSIDE SAME PLUGIN)
+======================================================= */
+
+cmd({
+    on: "message"
+},
+async (sock, mek, m, {
+    sender
+}) => {
+
+    try {
+
+        if (!m.message?.interactiveResponseMessage) return;
+
+        const response =
+            m.message.interactiveResponseMessage.nativeFlowResponseMessage;
+
+        if (!response?.paramsJson) return;
+
+        const parsed = JSON.parse(response.paramsJson);
+        const selectedId = parsed.id;
+
+        if (!selectedId || !selectedId.startsWith("selectjid_")) return;
+
+        const groupJid = selectedId.replace("selectjid_", "");
+
+        const groups = groupCache.get(sender);
+        if (!groups || !groups[groupJid]) return;
+
+        const group = groups[groupJid];
+
+        await sendInteractiveMessage(sock, m.key.remoteJid, {
+            text: `📌 *${group.subject}*\n\nBelow is the Group JID:`,
+            footer: "Tap copy button below",
+            interactiveButtons: [
+                {
+                    name: "cta_copy",
+                    buttonParamsJson: JSON.stringify({
+                        display_text: "📋 Copy Group JID",
+                        copy_code: groupJid
+                    })
+                }
+            ]
+        });
+
+    } catch (err) {
+        console.log("Interactive handler error:", err);
     }
 });
