@@ -107,7 +107,9 @@ async function handleGroupParticipantUpdate(conn, update) {
             
             const greeting = getTimeGreeting();
             
-            const welcomeMessage = `╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
+            // Fix: Create a clean string without template literal issues
+            const welcomeMessage = 
+`╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
 ┃━━━━━━━━━━━━━━━━━━━━━
 ┃ ${greeting}, *${userName}!* 
 ┃
@@ -138,15 +140,15 @@ async function handleGroupParticipantUpdate(conn, update) {
 
 💫 *We're here to help grow your business!*`;
 
-            // Send welcome to the group mentioning the user
-            await conn.sendMessage(id, {
+            // Send welcome to the group mentioning the user - FIXED
+            await conn.sendMessage(id, { 
                 text: welcomeMessage,
                 mentions: [participantJid]
             });
             
             // Mark as welcomed
             markWelcomed(participantJid);
-            console.log(`✅ [WELCOME PLUGIN] Sent group welcome to ${participantJid} at Colombo hour ${hour}`);
+            console.log(`✅ [WELCOME PLUGIN] Sent group welcome to ${participantJid}`);
         }
     } catch (err) {
         console.error("❌ [WELCOME PLUGIN] Error in group participant update:", err);
