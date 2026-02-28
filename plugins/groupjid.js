@@ -1,3 +1,4 @@
+// plugins/groupjid.js
 const { cmd } = require('../command');
 const { sendInteractiveMessage } = require('gifted-btns');
 
@@ -43,8 +44,11 @@ async (sock, mek, m, {
             return reply("❌ Bot is not participating in any groups.");
         }
 
-        // Store groups in cache
-        groupCache.set(sender, groups);
+        // Store groups in cache with sender as key
+        groupCache.set(sender, {
+            groups: groups,
+            timestamp: Date.now()
+        });
 
         let rows = [];
 
@@ -52,7 +56,7 @@ async (sock, mek, m, {
             rows.push({
                 title: groups[jid].subject,
                 description: `Members: ${groups[jid].participants.length}`,
-                id: `selectjid_${jid}`
+                id: `groupjid_${jid}`
             });
         }
 
@@ -85,39 +89,55 @@ async (sock, mek, m, {
 });
 
 /* =======================================================
-   🔥 BUTTON RESPONSE HANDLER
+   🔥 BUTTON RESPONSE HANDLER - This gets called by index.js
 ======================================================= */
 
 module.exports.onButtonResponse = async (conn, msg, selectedId, from) => {
     try {
         console.log("🔘 [GROUPJID] Button clicked:", selectedId);
 
-        // Check if this is a group selection
-        if (!selectedId || !selectedId.startsWith("selectjid_")) return;
+        // Check if this is a group selection from our command
+        if (!selectedId || !selectedId.startsWith("groupjid_")) return;
 
-        const groupJid = selectedId.replace("selectjid_", "");
+        const groupJid = selectedId.replace("groupjid_", "");
         
         // Get sender from the message
         const sender = msg.key.participant || msg.key.remoteJid;
         
         // Get groups from cache
-        const groups = groupCache.get(sender);
-        if (!groups) {
+        const cached = groupCache.get(sender);
+        if (!cached) {
             await conn.sendMessage(from, {
                 text: "❌ Session expired. Please run .groupjid again."
             });
             return;
         }
 
+        // Check if cache is expired (5 minutes)
+        if (Date.now() - cached.timestamp > 5 * 60 * 1000) {
+            groupCache.delete(sender);
+            await conn.sendMessage(from, {
+                text: "❌ Session expired. Please run .groupjid again."
+            });
+            return;
+        }
+
+        const groups = cached.groups;
         const group = groups[groupJid];
-        if (!group) return;
+        
+        if (!group) {
+            await conn.sendMessage(from, {
+                text: "❌ Group not found. Please run .groupjid again."
+            });
+            return;
+        }
 
         // Send the JID with copy button
         await sendInteractiveMessage(conn, from, {
             image: { url: serviceLogo },
             title: "📋 GROUP JID",
-            text: `📌 *${group.subject}*\n\nBelow is the Group JID:`,
-            footer: "Tap copy button below",
+            text: `📌 *${group.subject}*\n\n*Group JID:*\n\`${groupJid}\`\n\nTap the button below to copy:`,
+            footer: "MMT Business Hub • Owner Panel",
             interactiveButtons: [
                 {
                     name: "cta_copy",
@@ -135,3 +155,17 @@ module.exports.onButtonResponse = async (conn, msg, selectedId, from) => {
         console.error("❌ [GROUPJID] Button response error:", err);
     }
 };
+
+/* =======================================================
+   🔥 CLEANUP OLD CACHE ENTRIES (run every 10 minutes)
+======================================================= */
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [sender, cached] of groupCache.entries()) {
+        if (now - cached.timestamp > 5 * 60 * 1000) {
+            groupCache.delete(sender);
+            console.log(`🧹 [GROUPJID] Cleared expired cache for ${sender}`);
+        }
+    }
+}, 10 * 60 * 1000);
