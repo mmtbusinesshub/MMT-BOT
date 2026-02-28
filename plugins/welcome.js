@@ -84,34 +84,46 @@ async function handleGroupParticipantUpdate(conn, update) {
     try {
         const { id, participants, action } = update;
         
-        // Only process for your specific group (bypasses inbox mode)
+        // Only process for your specific group
         if (id !== YOUR_GROUP_JID) return;
         
         // Only process when users are added
         if (action !== 'add') return;
         
-        console.log(`👥 [WELCOME PLUGIN] New member added to your group: ${participants.join(', ')}`);
+        console.log(`👥 [WELCOME PLUGIN] New member added to your group:`, participants);
         
         for (const participantJid of participants) {
-            // Check if user needs welcome (30-day reset)
-            if (!needsWelcome(participantJid)) continue;
-            
-            // Get user info
-            let userName = 'there';
             try {
-                const userInfo = await conn.onWhatsApp(participantJid);
-                if (userInfo[0]?.name) {
-                    userName = userInfo[0].name;
-                }
-            } catch {}
-            
-            const greeting = getTimeGreeting();
-            
-            // Fix: Create a clean string without template literal issues
-            const welcomeMessage = 
+                // Check if user needs welcome
+                if (!needsWelcome(participantJid)) continue;
+                
+                // Get user info
+                let userName = 'there';
+                try {
+                    const userInfo = await conn.onWhatsApp(participantJid);
+                    if (userInfo[0]?.name) {
+                        userName = userInfo[0].name;
+                    }
+                } catch {}
+                
+                const greeting = getTimeGreeting();
+                
+                // Simple test message first
+                const testMessage = `👋 Welcome to the group, @${participantJid.split('@')[0]}!`;
+                
+                console.log(`📤 Sending welcome to ${participantJid}`);
+                
+                // Send with proper mentions format
+                await conn.sendMessage(id, {
+                    text: testMessage,
+                    mentions: [participantJid]
+                });
+                
+                // If test works, then send full message
+                const fullMessage = 
 `╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
 ┃━━━━━━━━━━━━━━━━━━━━━
-┃ ${greeting}, *${userName}!* 
+┃ ${greeting}, @${participantJid.split('@')[0]}! 
 ┃
 ┃ 👋 *Welcome to MMT Business Hub!*
 ┃ 🤖 *I'm your AI Business Assistant*
@@ -120,35 +132,29 @@ async function handleGroupParticipantUpdate(conn, update) {
 ┃
 ┃ 💳 *BANK DETAILS*
 ┃ • Type *bank details* to see all payment methods
-┃ • HNB, BOC, EZ Cash, Binance Pay
 ┃
 ┃ 🚀 *SERVICE DETAILS*
 ┃ • Type *tiktok followers* 
 ┃ • Type *instagram likes*
-┃ • Type *facebook page views*
-┃ • Type *youtube subscribers*
-┃ • Type *whatsapp channel*
 ┃
 ┃ 👑 *ADMIN DETAILS*
 ┃ • Type *admin details* for contact info
-┃ • Support team ready to help
 ┃
 ┃ 🌐 *HOSTING DETAILS*
 ┃ • Type *hosting* to see our plans
-┃ • Fast & reliable web hosting
-╰━━━━━━━━━━━━━━━━━━━━━━━╯
+╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
 
-💫 *We're here to help grow your business!*`;
-
-            // Send welcome to the group mentioning the user - FIXED
-            await conn.sendMessage(id, { 
-                text: welcomeMessage,
-                mentions: [participantJid]
-            });
-            
-            // Mark as welcomed
-            markWelcomed(participantJid);
-            console.log(`✅ [WELCOME PLUGIN] Sent group welcome to ${participantJid}`);
+                await conn.sendMessage(id, {
+                    text: fullMessage,
+                    mentions: [participantJid]
+                });
+                
+                markWelcomed(participantJid);
+                console.log(`✅ [WELCOME PLUGIN] Sent welcome to ${participantJid}`);
+                
+            } catch (err) {
+                console.error(`❌ Error sending to ${participantJid}:`, err);
+            }
         }
     } catch (err) {
         console.error("❌ [WELCOME PLUGIN] Error in group participant update:", err);
