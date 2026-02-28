@@ -1,48 +1,76 @@
 const { cmd } = require('../command');
+const { sendInteractiveMessage } = require('gifted-btns');
+
+// Temporary memory store per user
+const groupCache = new Map();
 
 cmd({
     pattern: "groupjid",
-    desc: "Get group JIDs (Owner only - Private use)",
+    desc: "Interactive Group JID Finder (Owner only)",
     category: "owner",
     filename: __filename
 },
-async (danuwamd, mek, m, {
-    from, isGroup, isOwner, reply
+async (sock, mek, m, {
+    from,
+    sender,
+    isOwner,
+    isGroup,
+    reply
 }) => {
     try {
 
-        // Owner check
+        // 🔒 Owner check
         if (!isOwner) {
-            return reply("❌ *This command is only for bot owners!*");
+            return reply("❌ This command is only for bot owners.");
         }
 
-        // Must be used in private chat
+        // ❌ Must use in private chat
         if (isGroup) {
-            return reply("❌ *Use this command in private chat only!*");
+            return reply("❌ Use this command in private chat.");
         }
 
-        // Get all groups bot participates in
-        const groups = await danuwamd.groupFetchAllParticipating();
+        // Fetch groups
+        const groups = await sock.groupFetchAllParticipating();
 
         if (!groups || Object.keys(groups).length === 0) {
-            return reply("❌ Bot is not in any groups.");
+            return reply("❌ Bot is not participating in any groups.");
         }
 
-        let caption = `╭━━〔 📌 GROUP JID LIST 〕━━╮\n┃\n`;
+        // Store groups per owner session
+        groupCache.set(sender, groups);
 
-        let index = 1;
+        let rows = [];
+
         for (let jid in groups) {
-            caption += `┃ ${index}. ${groups[jid].subject}\n`;
-            caption += `┃    🆔 ${jid}\n┃\n`;
-            index++;
+            rows.push({
+                title: groups[jid].subject,
+                description: `Members: ${groups[jid].participants.length}`,
+                id: `selectjid_${jid}`
+            });
         }
 
-        caption += `╰━━━━━━━━━━━━━━━━━━━━━━╯\n\n🔒 Owner Only`;
+        // Send interactive single select
+        await sendInteractiveMessage(sock, from, {
+            text: "📌 Select a group to get its JID",
+            footer: "MMT Business Hub • Owner Panel",
+            interactiveButtons: [
+                {
+                    name: "single_select",
+                    buttonParamsJson: JSON.stringify({
+                        title: "Choose Group",
+                        sections: [
+                            {
+                                title: "Your Groups",
+                                rows: rows
+                            }
+                        ]
+                    })
+                }
+            ]
+        });
 
-        await reply(caption);
-
-    } catch (e) {
-        console.log(e);
-        reply(`❌ *Error:* ${e.message}`);
+    } catch (err) {
+        console.log(err);
+        reply(`❌ Error: ${err.message}`);
     }
 });
