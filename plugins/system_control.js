@@ -1,7 +1,6 @@
 // plugins/system_control.js
 const { cmd, commands } = require('../command');
 const config = require('../config');
-const { spawn } = require('child_process');
 
 cmd({
     pattern: "restart",
@@ -27,18 +26,10 @@ async (danuwamd, mek, m, {
         console.log(`🔄 [SYSTEM] Restart initiated by ${senderNumber}`);
 
         // Small delay to ensure message is sent
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Restart the bot process
-        process.on('exit', () => {
-            spawn(process.argv.shift(), process.argv, {
-                cwd: process.cwd(),
-                detached: true,
-                stdio: 'inherit'
-            });
-        });
-        
-        process.exit();
+        // Exit process - the process manager (PM2, forever, etc.) will restart it
+        process.exit(0);
 
     } catch (e) {
         console.log(e);
@@ -72,8 +63,8 @@ async (danuwamd, mek, m, {
         // Small delay to ensure message is sent
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Exit process without spawning new one
-        process.exit();
+        // Exit process with code 1 to prevent auto-restart in some process managers
+        process.exit(1);
 
     } catch (e) {
         console.log(e);
