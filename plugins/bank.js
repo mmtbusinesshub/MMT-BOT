@@ -22,13 +22,24 @@ const bankDetails = {
 *Name: Samsul nisa*`,
     emoji: '🏦',
     icon: '🇱🇰'
+  },
+  'ezcash': {
+    name: 'EZ CASH',
+    shortName: 'EZ Cash',
+    details: `💵🤑 *eZ Cash*
+
+📱 *Number:* 077 105 6082
+⚠️ *Note:* Please add an extra Rs. 20/= for eZ Cash payments.`,
+    emoji: '💵',
+    icon: '💵'
   }
 };
 
 const bankKeywords = [
   'bank', 'payment', 'transfer', 'deposit', 
   'payment details', 'bank details', 'send money',
-  'pay', 'payment method', 'bank account', 'account number'
+  'pay', 'payment method', 'bank account', 'account number',
+  'ezcash', 'ez cash', 'cash', 'ez'
 ];
 
 module.exports = {
@@ -67,22 +78,23 @@ module.exports = {
       } catch (reactError) {}
 
       // Send bank selection with buttons
-      const buttonText = `🏦 *BANK DETAILS REQUEST*
+      const buttonText = `🏦 *PAYMENT DETAILS REQUEST*
 ────────────────────
-🇱🇰 *HNB Bank* - Tap button below
-🇱🇰 *BOC Bank* - Tap button below
+🇱🇰 *HNB Bank*
+🇱🇰 *BOC Bank*
+💵 *EZ Cash*
 ────────────────────
 ⭕ *Simply tap the button to get complete details.*
 
-⭕ *සම්පූර්න බැන්කු විස්තර ලබාගන්න පහත බටනය ඔබන්න.*
+⭕ *සම්පූර්න ගෙවීම් විස්තර ලබාගන්න පහත බටනය ඔබන්න.*
 
-⭕ *முழுமையான வங்கி விவரங்களைப் பெற, கீழே உள்ள பொத்தானைத் தட்டவும்.*`;
+⭕ *முழுமையான கட்டண விவரங்களைப் பெற, கீழே உள்ள பொத்தானைத் தட்டவும்.*`;
 
       await sendInteractiveMessage(conn, from, {
         image: { url: serviceLogo },
-        title: "🏦 BANK DETAILS",
+        title: "🏦 PAYMENT DETAILS",
         text: buttonText,
-        footer: "Choose your bank:",
+        footer: "Choose payment method:",
         interactiveButtons: [
           {
             name: 'quick_reply',
@@ -99,6 +111,13 @@ module.exports = {
             })
           },
           {
+            name: 'quick_reply',
+            buttonParamsJson: JSON.stringify({
+              display_text: '💵 EZ Cash',
+              id: 'bank_ezcash'
+            })
+          },
+          {
             name: 'cta_url',
             buttonParamsJson: JSON.stringify({
               display_text: '📞 Contact Support',
@@ -108,17 +127,17 @@ module.exports = {
         ]
       }, { quoted: mek });
 
-      console.log(`🏦 [MMT BANK] Sent bank selection buttons`);
+      console.log(`🏦 [MMT BANK] Sent payment method selection buttons`);
 
     } catch (err) {
       console.error("❌ [MMT BANK] Plugin error:", err);
     }
   },
   
-  // Add this new function to handle button responses
+  // Handle button responses
   onButtonResponse: async (conn, msg, selectedId, from) => {
     try {
-      // Handle bank selection
+      // Handle payment method selection
       if (selectedId === 'bank_hnb') {
         const selectedBank = bankDetails['hnb'];
         const bankMessage = `🏦 *PAYMENT DETAILS*
@@ -127,20 +146,23 @@ ${selectedBank.icon} *${selectedBank.name}*
 ────────────────────
 ${selectedBank.details}
 ────────────────────
-📞 *Support:* wa.me/94722136082`;
+⏱️ *Please send payment screenshot after transfer*`;
 
-        await conn.sendMessage(from, {
+        // Send with contact support button
+        await sendInteractiveMessage(conn, from, {
           image: { url: serviceLogo },
-          caption: bankMessage,
-          contextInfo: {
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: channelJid,
-              newsletterName: channelName,
-              serverMessageId: -1
+          title: "🏦 PAYMENT DETAILS",
+          text: bankMessage,
+          footer: "Need help? Contact support:",
+          interactiveButtons: [
+            {
+              name: 'cta_url',
+              buttonParamsJson: JSON.stringify({
+                display_text: '📞 Contact Support',
+                url: 'https://wa.me/94722136082'
+              })
             }
-          }
+          ]
         });
         
         console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
@@ -153,23 +175,53 @@ ${selectedBank.icon} *${selectedBank.name}*
 ────────────────────
 ${selectedBank.details}
 ────────────────────
-📞 *Support:* wa.me/94722136082`;
+⏱️ *Please send payment screenshot after transfer*`;
 
-        await conn.sendMessage(from, {
+        // Send with contact support button
+        await sendInteractiveMessage(conn, from, {
           image: { url: serviceLogo },
-          caption: bankMessage,
-          contextInfo: {
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: channelJid,
-              newsletterName: channelName,
-              serverMessageId: -1
+          title: "🏦 PAYMENT DETAILS",
+          text: bankMessage,
+          footer: "Need help? Contact support:",
+          interactiveButtons: [
+            {
+              name: 'cta_url',
+              buttonParamsJson: JSON.stringify({
+                display_text: '📞 Contact Support',
+                url: 'https://wa.me/94722136082'
+              })
             }
-          }
+          ]
         });
         
         console.log(`🏦 [MMT BANK] Sent ${selectedBank.name} details`);
+        
+      } else if (selectedId === 'bank_ezcash') {
+        const selectedBank = bankDetails['ezcash'];
+        const bankMessage = `💵 *EZ CASH PAYMENT*
+────────────────────
+${selectedBank.details}
+────────────────────
+⏱️ *Please send payment screenshot after transfer*`;
+
+        // Send with contact support button
+        await sendInteractiveMessage(conn, from, {
+          image: { url: serviceLogo },
+          title: "💵 EZ CASH DETAILS",
+          text: bankMessage,
+          footer: "Need help? Contact support:",
+          interactiveButtons: [
+            {
+              name: 'cta_url',
+              buttonParamsJson: JSON.stringify({
+                display_text: '📞 Contact Support',
+                url: 'https://wa.me/94722136082'
+              })
+            }
+          ]
+        });
+        
+        console.log(`🏦 [MMT BANK] Sent EZ Cash details`);
       }
     } catch (error) {
       console.error("❌ [MMT BANK] Error handling button response:", error);
