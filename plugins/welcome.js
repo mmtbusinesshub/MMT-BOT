@@ -1,4 +1,3 @@
-// plugins/welcome.js
 const fs = require('fs');
 const path = require('path');
 const { sendInteractiveMessage } = require('gifted-btns');
@@ -7,14 +6,11 @@ const channelJid = '120363423526129509@newsletter';
 const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡';
 const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
 
-// File to store user data
 const WELCOME_DATA_FILE = path.join(__dirname, '../welcome_data.json');
 
-// 30 days in milliseconds
 const WELCOME_RESET_DAYS = 30;
 const WELCOME_RESET_MS = WELCOME_RESET_DAYS * 24 * 60 * 60 * 1000;
 
-// Load or initialize welcome data
 let welcomeData = {};
 try {
     if (fs.existsSync(WELCOME_DATA_FILE)) {
@@ -25,7 +21,6 @@ try {
     console.error('❌ [WELCOME PLUGIN] Error loading welcome data:', err);
 }
 
-// Save welcome data to file
 function saveWelcomeData() {
     try {
         fs.writeFileSync(WELCOME_DATA_FILE, JSON.stringify(welcomeData, null, 2));
@@ -34,15 +29,12 @@ function saveWelcomeData() {
     }
 }
 
-// Check if user needs welcome message
 function needsWelcome(userJid) {
     const now = Date.now();
     const userData = welcomeData[userJid];
     
-    // If no data, needs welcome
     if (!userData) return true;
     
-    // Check if 30 days have passed since last welcome
     if (now - userData.lastWelcome > WELCOME_RESET_MS) {
         return true;
     }
@@ -50,7 +42,6 @@ function needsWelcome(userJid) {
     return false;
 }
 
-// Mark user as welcomed
 function markWelcomed(userJid) {
     welcomeData[userJid] = {
         lastWelcome: Date.now(),
@@ -65,27 +56,21 @@ module.exports = {
             const key = mek.key;
             const content = mek.message;
             
-            // Ignore status broadcasts and own messages
             if (key.remoteJid === 'status@broadcast' || key.fromMe) return;
             
             const from = key.remoteJid;
             const sender = key.participant || from;
             
-            // Only for 1-on-1 chats (not groups)
             if (from.endsWith('@g.us')) return;
             
-            // Check if user needs welcome
             if (!needsWelcome(sender)) return;
             
             console.log(`👋 [WELCOME PLUGIN] Sending welcome to new user: ${sender}`);
             
-            // Send typing indicator
             await conn.sendPresenceUpdate('composing', from);
             
-            // Small delay to make it feel natural
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // Welcome message with all features (removed text links since we'll use buttons)
             const welcomeCaption = `
 ╭━〔 🎉 *WELCOME TO MMT* 〕━╮
 ┃━━━━━━━━━━━━━━━━━━━━━
@@ -116,7 +101,6 @@ module.exports = {
 
 💫 *We're here to help grow your business!*`;
 
-            // Send welcome message with logo AND buttons
             await sendInteractiveMessage(conn, from, {
                 image: { url: serviceLogo },
                 title: "🎉 WELCOME TO MMT BUSINESS HUB",
@@ -155,7 +139,6 @@ module.exports = {
                 ]
             }, { quoted: mek });
             
-            // Mark user as welcomed
             markWelcomed(sender);
             
             console.log(`✅ [WELCOME PLUGIN] Welcome sent to ${sender} with buttons`);
