@@ -211,6 +211,8 @@ const groupJidPlugin = require('./plugins/groupjid.js');
 global.pluginHooks.push(groupJidPlugin);
 const groupaddplugin = require('./plugins/addgroup.js');
 global.pluginHooks.push(groupaddplugin);
+const ownerDetails = require('./plugins/owner.js');
+global.pluginHooks.push(ownerDetails);
 
 async function connectToWA() {
   console.log("🛰️ [MMT BUSINESS HUB] Initializing WhatsApp connection...");
