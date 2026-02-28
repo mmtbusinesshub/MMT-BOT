@@ -1,88 +1,69 @@
 const { cmd } = require('../command');
 const { sendInteractiveMessage } = require('gifted-btns');
-const config = require('../config');
 
+// Temporary cache per owner session
 const groupCache = new Map();
 
-// ------------------ Extract Body (Same Method As Alive Plugin) ------------------
-function extractBody(mek, m) {
-    const type = Object.keys(mek.message || {})[0];
+/* =======================================================
+   🔥 MAIN COMMAND
+======================================================= */
 
-    return (type === 'conversation') ? mek.message.conversation :
-           (type === 'extendedTextMessage') ? mek.message.extendedTextMessage.text :
-           (type === 'templateButtonReplyMessage') ? mek.message.templateButtonReplyMessage?.selectedId :
-           (type === 'interactiveResponseMessage') ? (() => {
-              try {
-                  const json = JSON.parse(
-                      mek.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson
-                  );
-                  return json?.id || '';
-              } catch { return ''; }
-           })() :
-           m.msg?.text ||
-           m.msg?.conversation ||
-           m.msg?.selectedButtonId ||
-           m.msg?.singleSelectReply?.selectedRowId ||
-           '';
-}
-
-// ------------------ MAIN COMMAND ------------------
 cmd({
     pattern: "groupjid",
-    desc: "Get list of group JIDs",
+    desc: "Interactive Group JID Finder (Owner only)",
     category: "owner",
     filename: __filename
-}, async (sock, mek, m, { from, reply }) => {
+},
+async (sock, mek, m, {
+    from,
+    isOwner,
+    isGroup,
+    reply
+}) => {
 
     try {
 
-const ownerNumber = config.OWNER_NUMBER;
-
-if (!ownerNumber) {
-    return reply("❌ OWNER_NUMBER not defined in config.");
-}
-
-const senderNumber = m.sender.split('@')[0];
-
-if (
-    (Array.isArray(ownerNumber) && !ownerNumber.includes(senderNumber)) ||
-    (typeof ownerNumber === "string" && ownerNumber !== senderNumber)
-) {
-    return reply("❌ This command is Owner Only.");
-}
-
-        // Get groups
-        const groups = await sock.groupFetchAllParticipating();
-        const groupList = Object.values(groups);
-
-        if (!groupList.length) {
-            return reply("❌ No groups found.");
+        // 🔒 Owner check
+        if (!isOwner) {
+            return reply("❌ This command is only for bot owners.");
         }
 
-        // Store in cache using sender
-        const sender = m.sender;
-        groupCache.set(sender, groups);
+        // ❌ Must use in private chat
+        if (isGroup) {
+            return reply("❌ Use this command in private chat.");
+        }
 
-        // Build single select rows
-        const rows = groupList.map(g => ({
-            header: g.subject,
-            title: g.subject,
-            description: `Members: ${g.participants.length}`,
-            id: `selectjid_${g.id}`
-        }));
+        const groups = await sock.groupFetchAllParticipating();
+
+        if (!groups || Object.keys(groups).length === 0) {
+            return reply("❌ Bot is not participating in any groups.");
+        }
+
+        // ✅ Store using m.sender (important fix)
+        groupCache.set(m.sender, groups);
+
+        let rows = [];
+
+        for (let jid in groups) {
+            rows.push({
+                title: groups[jid].subject,
+                description: `Members: ${groups[jid].participants.length}`,
+                id: `selectjid_${jid}`
+            });
+        }
 
         await sendInteractiveMessage(sock, from, {
-            text: "📌 *Select a Group to Get JID*",
-            footer: "Owner Only Tool",
+            text: "📌 *Select a group to get its JID*",
+            footer: "MMT Business Hub • Owner Panel",
             interactiveButtons: [
                 {
                     name: "single_select",
                     buttonParamsJson: JSON.stringify({
-                        title: "📂 Choose Group",
+                        title: "Choose Group",
                         sections: [
                             {
                                 title: "Your Groups",
-                                rows
+                                rows: rows
                             }
                         ]
                     })
@@ -91,32 +72,45 @@ if (
         }, { quoted: mek });
 
     } catch (err) {
-        console.log(err);
-        reply("❌ Error fetching groups.");
+        console.log("GroupJID Command Error:", err);
+        reply(`❌ Error: ${err.message}`);
     }
 });
 
 
-// ------------------ INTERACTIVE RESPONSE HANDLER ------------------
+/* =======================================================
+   🔥 INTERACTIVE RESPONSE HANDLER
+======================================================= */
+
 cmd({
-    on: "body"
-}, async (sock, mek, m, { from }) => {
+    on: "message"
+},
+async (sock, mek, m) => {
 
     try {
 
-        const body = extractBody(mek, m);
+        if (!m.message?.interactiveResponseMessage) return;
 
-        if (!body.startsWith("selectjid_")) return;
+        const response =
+            m.message.interactiveResponseMessage.nativeFlowResponseMessage;
 
-        const groupJid = body.replace("selectjid_", "");
-        const sender = m.sender;
+        if (!response?.paramsJson) return;
 
-        const groups = groupCache.get(sender);
-        if (!groups || !groups[groupJid]) return;
+        const parsed = JSON.parse(response.paramsJson);
+        const selectedId = parsed.id;
+
+        if (!selectedId || !selectedId.startsWith("selectjid_")) return;
+
+        const groupJid = selectedId.replace("selectjid_", "");
+
+        // ✅ Always use m.sender for cache retrieval
+        const groups = groupCache.get(m.sender);
+        if (!groups) return;
 
         const group = groups[groupJid];
+        if (!group) return;
 
-        await sendInteractiveMessage(sock, from, {
+        await sendInteractiveMessage(sock, m.key.remoteJid, {
             text: `📌 *${group.subject}*\n\nBelow is the Group JID:`,
             footer: "Tap copy button below",
             interactiveButtons: [
