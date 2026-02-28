@@ -34,7 +34,7 @@ module.exports = {
       await sendButtons(conn, key.remoteJid, {
         image: { url: ownerImage },
         title: "👑 *OWNER CONTACT*",
-        text: "You can reach out to the bot owner for any inquiries.\n\n⭕ *Name:* M.I.M. IFLAJ\n⭕ *Phone:* +94722136082\n⭕ *Role:*👑 Owner of MMT BUSINESS HUB",
+        text: "You can reach out to the bot owner for any inquiries.\n\n⭕ *Name:* M.I.M. IFLAJ\n⭕ *Phone:* +94722136082\n⭕ *Role:*Owner of MMT BUSINESS HUB",
         footer: "Click the button below to chat with owner",
         aimode: false, // Set to false for standard buttons
         buttons: [
@@ -63,7 +63,7 @@ END:VCARD`;
 
         await conn.sendMessage(key.remoteJid, {
           image: { url: ownerImage },
-          caption: "👑 *Owner Contact*\n\nYou can reach out to the bot owner for any inquiries.\n⭕ Name: M.I.M. IFLAJ\n⭕ Phone: +94722136082\n*👑 Owner of MMT BUSINESS HUB*"
+          caption: "👑 *Owner Contact*\n\nYou can reach out to the bot owner for any inquiries.\n⭕ Name: M.I.M. IFLAJ\n⭕ Phone: +94722136082\n*⭕ *Role:*Owner of MMT BUSINESS HUB"
         }, { quoted: mek });
 
         await conn.sendMessage(key.remoteJid, {
