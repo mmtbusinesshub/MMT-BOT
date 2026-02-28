@@ -16,7 +16,7 @@ const pendingAdds = new Map();
 
 cmd({
     pattern: "groupadd",
-    desc: "Add participant to a group (Owner only)",
+    desc: "Add participant(s) to a group (Owner only)",
     category: "owner",
     filename: __filename
 },
@@ -39,22 +39,41 @@ async (sock, mek, m, {
             return reply("❌ Use this command in private chat.");
         }
 
-        // Check if phone number is provided
+        // Check if phone numbers are provided
         if (args.length === 0) {
-            return reply("❌ Please provide a phone number.\n\nExample: `.groupadd +94776121326`");
+            return reply("❌ Please provide phone number(s).\n\nExample: `.groupadd +94776121326`\nExample: `.groupadd +94776121326, +94774915917`");
         }
 
-        // Extract and clean phone number
-        let phoneNumber = args[0].replace(/[^0-9+]/g, '');
+        // Parse multiple numbers (split by comma)
+        const numbersString = args.join(' ');
+        const numberList = numbersString.split(',').map(num => num.trim());
         
-        // Ensure number has + prefix
-        if (!phoneNumber.startsWith('+')) {
-            phoneNumber = '+' + phoneNumber;
+        // Process and validate each number
+        let phoneNumbers = [];
+        let invalidNumbers = [];
+
+        for (const num of numberList) {
+            let phoneNumber = num.replace(/[^0-9+]/g, '');
+            
+            // Ensure number has + prefix
+            if (!phoneNumber.startsWith('+')) {
+                phoneNumber = '+' + phoneNumber;
+            }
+
+            // Basic validation
+            if (phoneNumber.length < 10) {
+                invalidNumbers.push(num);
+            } else {
+                phoneNumbers.push(phoneNumber);
+            }
         }
 
-        // Basic validation
-        if (phoneNumber.length < 10) {
-            return reply("❌ Invalid phone number. Please include country code.\nExample: +94776121326");
+        if (phoneNumbers.length === 0) {
+            return reply("❌ No valid phone numbers provided. Please include country codes.\nExample: +94776121326");
+        }
+
+        if (invalidNumbers.length > 0) {
+            reply(`⚠️ *Invalid numbers skipped:* ${invalidNumbers.join(', ')}`);
         }
 
         // Get allowed groups from config
@@ -74,7 +93,7 @@ async (sock, mek, m, {
                     groupOptions.push({
                         title: groupMetadata.subject,
                         description: `Members: ${groupMetadata.participants.length}`,
-                        id: `addtogroup_${groupJid}_${phoneNumber}`
+                        id: `addtogroup_${groupJid}_${phoneNumbers.join('|')}`
                     });
                 }
             } catch (err) {
@@ -88,7 +107,7 @@ async (sock, mek, m, {
 
         // Store pending add
         pendingAdds.set(sender, {
-            phoneNumber: phoneNumber,
+            phoneNumbers: phoneNumbers,
             timestamp: Date.now()
         });
 
@@ -96,7 +115,7 @@ async (sock, mek, m, {
         await sendInteractiveMessage(sock, from, {
             image: { url: serviceLogo },
             title: "👥 ADD TO GROUP",
-            text: `📱 *Number:* ${phoneNumber}\n\n📌 *Select which group to add this participant:*`,
+            text: `📱 *Numbers to add:*\n${phoneNumbers.map(num => `• ${num}`).join('\n')}\n\n📌 *Select which group to add these participants:*`,
             footer: "MMT Business Hub • Owner Panel",
             interactiveButtons: [
                 {
@@ -131,91 +150,107 @@ module.exports.onButtonResponse = async (conn, msg, selectedId, from) => {
         // Check if this is a group add selection
         if (!selectedId || !selectedId.startsWith("addtogroup_")) return;
 
-        // Parse the selected ID: addtogroup_{groupJid}_{phoneNumber}
+        // Parse the selected ID: addtogroup_{groupJid}_{phoneNumbers}
         const parts = selectedId.split('_');
         if (parts.length < 3) return;
 
         const groupJid = parts[1];
-        const phoneNumber = parts.slice(2).join('_'); // Rejoin in case number has underscores
+        const phoneNumbersString = parts.slice(2).join('_');
+        const phoneNumbers = phoneNumbersString.split('|');
 
         // Get sender from the message
         const sender = msg.key?.participant || msg.key?.remoteJid || from;
 
-        // Verify this is from a pending add (optional, can remove if not needed)
-        const pending = pendingAdds.get(sender);
-        if (!pending) {
-            // Still allow, but log warning
-            console.log("⚠️ [GROUPADD] No pending add found for", sender);
-        }
+        // Get group name for messages
+        const groupMetadata = await conn.groupMetadata(groupJid);
+        const groupName = groupMetadata.subject;
 
-        // Clean up phone number (ensure it has @s.whatsapp.net format)
-        const cleanNumber = phoneNumber.replace(/[^0-9+]/g, '');
-        const participantJid = cleanNumber.includes('+') 
-            ? cleanNumber.replace('+', '') + '@s.whatsapp.net'
-            : cleanNumber + '@s.whatsapp.net';
+        // Send initial processing message
+        await conn.sendMessage(from, {
+            text: `🔄 *Adding ${phoneNumbers.length} participant(s) to ${groupName}...*\n\nThis may take a few moments.`
+        });
 
-        console.log(`📤 [GROUPADD] Adding ${participantJid} to ${groupJid}`);
+        // Track results
+        let success = [];
+        let failed = [];
 
-        // Send typing indicator
-        await conn.sendPresenceUpdate('composing', from);
+        // Add each participant
+        for (const phoneNumber of phoneNumbers) {
+            try {
+                // Clean up phone number
+                const cleanNumber = phoneNumber.replace(/[^0-9+]/g, '');
+                const participantJid = cleanNumber.includes('+') 
+                    ? cleanNumber.replace('+', '') + '@s.whatsapp.net'
+                    : cleanNumber + '@s.whatsapp.net';
 
-        // Try to add participant to group
-        try {
-            const response = await conn.groupParticipantsUpdate(
-                groupJid,
-                [participantJid],
-                'add'
-            );
+                console.log(`📤 [GROUPADD] Adding ${participantJid} to ${groupJid}`);
 
-            console.log("Group add response:", response);
+                // Try to add participant to group
+                const response = await conn.groupParticipantsUpdate(
+                    groupJid,
+                    [participantJid],
+                    'add'
+                );
 
-            // Get group name for success message
-            const groupMetadata = await conn.groupMetadata(groupJid);
-            const groupName = groupMetadata.subject;
+                console.log("Group add response:", response);
+                success.push(phoneNumber);
 
-            // Success message
-            await sendInteractiveMessage(conn, from, {
-                image: { url: serviceLogo },
-                title: "✅ SUCCESS",
-                text: `✅ *Successfully added*\n\n📱 *Number:* ${phoneNumber}\n👥 *Group:* ${groupName}\n\n━━━━━━━━━━━━━━━━\n💫 Participant has been added to the group.`,
-                footer: "MMT Business Hub • Owner Panel",
-                interactiveButtons: [
-                    {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: '➕ Add Another',
-                            id: 'add_another'
-                        })
-                    }
-                ]
-            });
+                // Small delay between adds to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-            console.log(`✅ [GROUPADD] Added ${phoneNumber} to ${groupName}`);
-
-            // Clear pending add
-            pendingAdds.delete(sender);
-
-        } catch (err) {
-            console.error("❌ [GROUPADD] Failed to add participant:", err);
-
-            let errorMessage = err.message;
-
-            // Handle common errors
-            if (err.message.includes('403')) {
-                errorMessage = "❌ *Cannot add participant*\n• User's privacy settings prevent being added\n• User may have left the group recently\n• Try sending them an invite link instead";
-            } else if (err.message.includes('already')) {
-                errorMessage = "❌ *User is already in the group*";
-            } else if (err.message.includes('408')) {
-                errorMessage = "❌ *Request timeout*\n• Please try again";
+            } catch (err) {
+                console.error(`❌ [GROUPADD] Failed to add ${phoneNumber}:`, err.message);
+                failed.push({ number: phoneNumber, error: err.message });
             }
+        }
 
-            await conn.sendMessage(from, {
-                text: `❌ *Failed to add participant*\n\n📱 *Number:* ${phoneNumber}\n\n${errorMessage}`
+        // Prepare result message
+        let resultMessage = `📊 *ADD PARTICIPANTS RESULT*\n\n`;
+        resultMessage += `👥 *Group:* ${groupName}\n`;
+        resultMessage += `━━━━━━━━━━━━━━━━\n\n`;
+
+        if (success.length > 0) {
+            resultMessage += `✅ *Successfully added (${success.length}):*\n`;
+            success.forEach(num => {
+                resultMessage += `• ${num}\n`;
+            });
+            resultMessage += `\n`;
+        }
+
+        if (failed.length > 0) {
+            resultMessage += `❌ *Failed to add (${failed.length}):*\n`;
+            failed.forEach(item => {
+                resultMessage += `• ${item.number}\n`;
+                if (item.error.includes('403')) {
+                    resultMessage += `  ⚠️ Privacy settings\n`;
+                } else if (item.error.includes('already')) {
+                    resultMessage += `  ⚠️ Already in group\n`;
+                } else {
+                    resultMessage += `  ⚠️ ${item.error}\n`;
+                }
             });
         }
+
+        // Send result message
+        await sendInteractiveMessage(conn, from, {
+            image: { url: serviceLogo },
+            title: success.length > 0 ? "✅ ADD COMPLETE" : "❌ ADD FAILED",
+            text: resultMessage,
+            footer: "MMT Business Hub • Owner Panel",
+            interactiveButtons: [] // No buttons
+        });
+
+        console.log(`✅ [GROUPADD] Completed: ${success.length} success, ${failed.length} failed`);
+
+        // Clear pending add
+        pendingAdds.delete(sender);
 
     } catch (err) {
         console.error("❌ [GROUPADD] Button response error:", err);
+        
+        await conn.sendMessage(from, {
+            text: `❌ *Error processing group add:*\n${err.message}`
+        });
     }
 };
 
