@@ -79,7 +79,6 @@ function getUserName(mek) {
     return mek.pushName || 'there';
 }
 
-// Handle group participant updates
 async function handleGroupParticipantUpdate(conn, update) {
     try {
         const { id, participants, action } = update;
@@ -119,12 +118,19 @@ async function handleGroupParticipantUpdate(conn, update) {
                 const greeting = getTimeGreeting();
                 const mentionText = `@${participantJid.split('@')[0]}`;
                 
-                // Full welcome message with image and buttons
+                // Send a separate mention message first
+                await conn.sendMessage(id, {
+                    text: `${greeting}, ${mentionText}! 👋 Welcome to MMT Business Hub!`,
+                    mentions: [participantJid]
+                });
+                
+                // Small delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Full welcome message with image and buttons (without mention in caption)
                 const welcomeCaption = 
 `╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
 ┃━━━━━━━━━━━━━━━━━━━━━
-┃ ${greeting}, ${mentionText}! 
-┃
 ┃ 👋 *Welcome to MMT Business Hub!*
 ┃ 🤖 *I'm your AI Business Assistant*
 ┃━━━━━━━━━━━━━━━━━━━━━━━
@@ -188,10 +194,10 @@ async function handleGroupParticipantUpdate(conn, update) {
                             })
                         }
                     ]
-                }, { mentions: [participantJid] }); // Add mentions to tag the new member
+                });
                 
                 markWelcomed(participantJid);
-                console.log(`✅ [WELCOME PLUGIN] Sent full welcome with image to ${participantJid}`);
+                console.log(`✅ [WELCOME PLUGIN] Sent welcome to ${participantJid}`);
                 
             } catch (err) {
                 console.error(`❌ Error sending to participant:`, err);
