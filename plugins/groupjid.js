@@ -36,10 +36,20 @@ cmd({
 
     try {
 
-        // 🔒 Owner Check
-        if (!config.OWNER_NUMBER.includes(m.sender.split('@')[0])) {
-            return reply("❌ This command is Owner Only.");
-        }
+const ownerNumber = config.OWNER_NUMBER;
+
+if (!ownerNumber) {
+    return reply("❌ OWNER_NUMBER not defined in config.");
+}
+
+const senderNumber = m.sender.split('@')[0];
+
+if (
+    (Array.isArray(ownerNumber) && !ownerNumber.includes(senderNumber)) ||
+    (typeof ownerNumber === "string" && ownerNumber !== senderNumber)
+) {
+    return reply("❌ This command is Owner Only.");
+}
 
         // Get groups
         const groups = await sock.groupFetchAllParticipating();
