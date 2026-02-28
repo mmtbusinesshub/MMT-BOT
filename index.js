@@ -468,16 +468,16 @@ if (currentMode === 'private') {
 } 
 else if (currentMode === 'inbox') {
   // INBOX MODE: All users can use in inbox, but block ALL group messages
-  if (isGroup) {
-    // Only allow your specific group
-    if (from === YOUR_GROUP_JID) {
-      console.log(`📱 [INBOX MODE] Allowing message in your specific group: ${from}`);
-      // Continue processing for your group
+if (isGroup) {
+    // Check if this group is in allowed groups list
+    if (config.ALLOWED_GROUPS && config.ALLOWED_GROUPS.includes(from)) {
+        console.log(`📱 [INBOX MODE] Allowing message in allowed group: ${from}`);
+        // Continue processing for allowed group
     } else {
-      console.log(`📱 [INBOX MODE] Ignoring other group message from ${senderNumber} in ${from}`);
-      return; // Block all other group messages
+        console.log(`📱 [INBOX MODE] Ignoring other group message from ${senderNumber} in ${from}`);
+        return; // Block all other group messages
     }
-  }
+}
   // Inbox messages from all users are allowed (no need to check isOwner)
 }
 // PUBLIC MODE: Everything allowed (no checks needed)
