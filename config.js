@@ -11,9 +11,9 @@ const defaultConfig = {
   ALIVE_MSG: "",
   BOT_OWNER: "94716252841", // Replace your bot owner number here with 94(country code)
   ownerNumber: ["94716252841"], // Replace your bot owner number here (same as bot owner number)
-  AUTO_STATUS_REACT: "true",
-  AUTO_STATUS_REPLY: "true",
-  AUTO_STATUS_SEEN: "true",
+  AUTO_STATUS_REACT: "false",
+  AUTO_STATUS_REPLY: "false",
+  AUTO_STATUS_SEEN: "false",
   MODE: "inbox", // 'private', 'public'
   MMT_API_KEY: "529e5c3a2253bf93a5d9c2e104a3b498",
   ALLOWED_GROUPS: ["120363419871186359@g.us"], // Add your allowed group JIDs here
