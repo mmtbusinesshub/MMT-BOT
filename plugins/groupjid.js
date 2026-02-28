@@ -2,9 +2,6 @@
 const { cmd } = require('../command');
 const { sendInteractiveMessage } = require('gifted-btns');
 
-// Temporary cache per owner session
-const groupCache = new Map();
-
 const channelJid = '120363423526129509@newsletter';
 const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡';
 const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
@@ -15,7 +12,7 @@ const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/
 
 cmd({
     pattern: "groupjid",
-    desc: "Interactive Group JID Finder (Owner only)",
+    desc: "Get Group JIDs (Owner only)",
     category: "owner",
     filename: __filename
 },
@@ -23,8 +20,7 @@ async (sock, mek, m, {
     from,
     isOwner,
     isGroup,
-    reply,
-    sender
+    reply
 }) => {
 
     try {
@@ -38,29 +34,25 @@ async (sock, mek, m, {
             return reply("❌ Use this command in private chat.");
         }
 
+        // Fetch all groups the bot is in
         const groups = await sock.groupFetchAllParticipating();
 
         if (!groups || Object.keys(groups).length === 0) {
             return reply("❌ Bot is not participating in any groups.");
         }
 
-        // Store groups in cache with sender as key
-        groupCache.set(sender, {
-            groups: groups,
-            timestamp: Date.now()
-        });
-
         let rows = [];
 
+        // Create a row for each group
         for (let jid in groups) {
             rows.push({
                 title: groups[jid].subject,
                 description: `Members: ${groups[jid].participants.length}`,
-                id: `groupjid_${jid}`
+                id: `groupjid_${jid}`  // Store full JID in the ID
             });
         }
 
-        // Send the interactive menu
+        // Send interactive menu with all groups
         await sendInteractiveMessage(sock, from, {
             image: { url: serviceLogo },
             title: "👥 GROUP JID FINDER",
@@ -70,7 +62,7 @@ async (sock, mek, m, {
                 {
                     name: "single_select",
                     buttonParamsJson: JSON.stringify({
-                        title: "Choose Group",
+                        title: "Select Group",
                         sections: [
                             {
                                 title: "Your Groups",
@@ -89,40 +81,21 @@ async (sock, mek, m, {
 });
 
 /* =======================================================
-   🔥 BUTTON RESPONSE HANDLER - This gets called by index.js
+   🔥 BUTTON RESPONSE HANDLER
 ======================================================= */
 
 module.exports.onButtonResponse = async (conn, msg, selectedId, from) => {
     try {
         console.log("🔘 [GROUPJID] Button clicked:", selectedId);
 
-        // Check if this is a group selection from our command
+        // Check if this is a group selection
         if (!selectedId || !selectedId.startsWith("groupjid_")) return;
 
+        // Extract the group JID from the selected ID
         const groupJid = selectedId.replace("groupjid_", "");
         
-        // Get sender from the message
-        const sender = msg.key.participant || msg.key.remoteJid;
-        
-        // Get groups from cache
-        const cached = groupCache.get(sender);
-        if (!cached) {
-            await conn.sendMessage(from, {
-                text: "❌ Session expired. Please run .groupjid again."
-            });
-            return;
-        }
-
-        // Check if cache is expired (5 minutes)
-        if (Date.now() - cached.timestamp > 5 * 60 * 1000) {
-            groupCache.delete(sender);
-            await conn.sendMessage(from, {
-                text: "❌ Session expired. Please run .groupjid again."
-            });
-            return;
-        }
-
-        const groups = cached.groups;
+        // Get the group name by fetching groups again
+        const groups = await conn.groupFetchAllParticipating();
         const group = groups[groupJid];
         
         if (!group) {
@@ -149,23 +122,9 @@ module.exports.onButtonResponse = async (conn, msg, selectedId, from) => {
             ]
         });
 
-        console.log(`✅ [GROUPJID] Sent JID for group: ${group.subject}`);
+        console.log(`✅ [GROUPJID] Sent JID for: ${group.subject}`);
 
     } catch (err) {
         console.error("❌ [GROUPJID] Button response error:", err);
     }
 };
-
-/* =======================================================
-   🔥 CLEANUP OLD CACHE ENTRIES (run every 10 minutes)
-======================================================= */
-
-setInterval(() => {
-    const now = Date.now();
-    for (const [sender, cached] of groupCache.entries()) {
-        if (now - cached.timestamp > 5 * 60 * 1000) {
-            groupCache.delete(sender);
-            console.log(`🧹 [GROUPJID] Cleared expired cache for ${sender}`);
-        }
-    }
-}, 10 * 60 * 1000);
