@@ -1,13 +1,14 @@
+// plugins/welcome.js
 const fs = require('fs');
 const path = require('path');
 const { sendInteractiveMessage } = require('gifted-btns');
+const config = require('../config');
 
 const channelJid = '120363423526129509@newsletter';
 const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡';
 const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
 
-// Your specific group and channel JIDs
-const YOUR_GROUP_JID = '120363407450693131@g.us';
+// Your specific channel JID
 const YOUR_CHANNEL_JID = '120363427927272922@newsletter';
 
 const WELCOME_DATA_FILE = path.join(__dirname, '../welcome_data.json');
@@ -83,13 +84,18 @@ async function handleGroupParticipantUpdate(conn, update) {
     try {
         const { id, participants, action } = update;
         
-        // Only process for your specific group
-        if (id !== YOUR_GROUP_JID) return;
+        // Get allowed groups from config
+        const allowedGroups = config.ALLOWED_GROUPS || [];
+        
+        // Check if this group is in allowed groups list
+        if (!allowedGroups.includes(id)) {
+            return; // Ignore groups not in allowed list
+        }
         
         // Only process when users are added
         if (action !== 'add') return;
         
-        console.log(`👥 [WELCOME PLUGIN] New member added to your group:`, participants);
+        console.log(`👥 [WELCOME PLUGIN] New member added to allowed group ${id}:`, participants);
         
         for (const participant of participants) {
             try {
@@ -118,9 +124,16 @@ async function handleGroupParticipantUpdate(conn, update) {
                 const greeting = getTimeGreeting();
                 const mentionText = `@${participantJid.split('@')[0]}`;
                 
+                // Get group name for personalized message
+                let groupName = "the group";
+                try {
+                    const groupMetadata = await conn.groupMetadata(id);
+                    groupName = groupMetadata.subject;
+                } catch {}
+                
                 // Send a separate mention message first
                 await conn.sendMessage(id, {
-                    text: `${greeting}, ${mentionText}! 👋`,
+                    text: `${greeting}, ${mentionText}! 👋 Welcome to ${groupName}!`,
                     mentions: [participantJid]
                 });
                 
@@ -144,12 +157,10 @@ async function handleGroupParticipantUpdate(conn, update) {
 ┃ • Type *tiktok followers* 
 ┃ • Type *instagram likes*
 ┃ • Type *facebook page views*
-┃ • Type *youtube subscribers*
-┃ • Type *whatsapp channel*
 ┃
-┃ 👑 *ADMIN DETAILS*
-┃ • Type *admin details* for contact info
-┃ • Support team ready to help
+┃ 👑 *OWNER DETAILS*
+┃ • Type *owner details* for contact info
+┃ • Owner ready to help
 ┃
 ┃ 🌐 *HOSTING DETAILS*
 ┃ • Type *hosting* to see our plans
@@ -197,7 +208,7 @@ async function handleGroupParticipantUpdate(conn, update) {
                 });
                 
                 markWelcomed(participantJid);
-                console.log(`✅ [WELCOME PLUGIN] Sent welcome to ${participantJid}`);
+                console.log(`✅ [WELCOME PLUGIN] Sent welcome to ${participantJid} in ${id}`);
                 
             } catch (err) {
                 console.error(`❌ Error sending to participant:`, err);
@@ -233,10 +244,13 @@ module.exports = {
             const from = key.remoteJid;
             const sender = key.participant || from;
             
-            // Handle group messages - ONLY for your specific group
+            // Get allowed groups from config
+            const allowedGroups = config.ALLOWED_GROUPS || [];
+            
+            // Handle group messages - ONLY for allowed groups
             if (from.endsWith('@g.us')) {
-                // Only process if it's your specific group
-                if (from !== YOUR_GROUP_JID) return;
+                // Only process if it's in allowed groups
+                if (!allowedGroups.includes(from)) return;
                 
                 // Check if this is a text message that might need processing
                 // But group welcomes are handled by onGroupParticipantUpdate
@@ -273,12 +287,10 @@ module.exports = {
 ┃ • Type *tiktok followers* 
 ┃ • Type *instagram likes*
 ┃ • Type *facebook page views*
-┃ • Type *youtube subscribers*
-┃ • Type *whatsapp channel*
 ┃
-┃ 👑 *ADMIN DETAILS*
-┃ • Type *admin details* for contact info
-┃ • Support team ready to help
+┃ 👑 *OWNER DETAILS*
+┃ • Type *owner details* for contact info
+┃ • Owner ready to help
 ┃
 ┃ 🌐 *HOSTING DETAILS*
 ┃ • Type *hosting* to see our plans
