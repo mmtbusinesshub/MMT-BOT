@@ -1,4 +1,3 @@
-// plugins/system_control.js
 const { cmd, commands } = require('../command');
 const config = require('../config');
 
