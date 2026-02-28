@@ -1,7 +1,7 @@
 const { sendButtons } = require('gifted-btns');
 
-const adminImage = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/mmt-admin.jpeg?raw=true";
-const adminNumber = "94722136082"; 
+const adminImage = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/admin-details.jpg?raw=true";
+const adminNumber = "94771056082"; 
 const adminWhatsAppLink = `https://wa.me/${adminNumber}`;
 
 module.exports = {
@@ -23,7 +23,7 @@ module.exports = {
       await sendButtons(conn, key.remoteJid, {
         image: { url: adminImage },
         title: "🛠️ *ADMIN CONTACT*",
-        text: "You can reach out to the admin for support or inquiries.\n\n⭕ *Name:* M.I.M. IFLAJ\n⭕ *Phone:* +94722136082\n⭕ *Role:* Founder of MMT BUSINESS HUB",
+        text: "You can reach out to the admin for support or inquiries.\n\n⭕ *Name:* M.I.M. IFLAJ\n⭕ *Phone:* +94771056082\n⭕ *Role:* Founder of MMT BUSINESS HUB",
         footer: "Click the button below to chat with admin",
         aimode: false, // Set to false for standard buttons
         buttons: [
@@ -52,7 +52,7 @@ END:VCARD`;
 
         await conn.sendMessage(key.remoteJid, {
           image: { url: adminImage },
-          caption: "🛠️ *Admin Contact*\n\nYou can reach out to the admin for support or inquiries.\n⭕ Name: M.I.M. IFLAJ\n⭕ Phone: +94722136082\n*🤵 Founder of MMT BUSINESS HUB*"
+          caption: "🛠️ *Admin Contact*\n\nYou can reach out to the admin for support or inquiries.\n⭕ Name: M.I.M. IFLAJ\n⭕ Phone: +94771056082\n*🤵 Founder of MMT BUSINESS HUB*"
         }, { quoted: mek });
 
         await conn.sendMessage(key.remoteJid, {
