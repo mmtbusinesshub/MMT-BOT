@@ -1,8 +1,16 @@
+const { sendInteractiveMessage } = require('gifted-btns');
+
+const channelJid = '120363423526129509@newsletter';
+const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡';
+const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
+
 const hostingImages = [
   "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.22%20PM.jpeg?raw=true",
   "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.25%20PM.jpeg?raw=true",
   "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/WhatsApp%20Image%202025-11-26%20at%205.40.26%20PM.jpeg?raw=true"
 ];
+
+const hostingKeywords = ['hosting', 'host', 'server', 'website', 'web host'];
 
 module.exports = {
   onMessage: async (conn, mek) => {
@@ -17,20 +25,53 @@ module.exports = {
         content.imageMessage?.caption ||
         "";
 
-      if (!text.toLowerCase().includes("hosting")) return;
+      if (!text.trim()) return;
+      
+      const msg = text.toLowerCase();
+      const from = key.remoteJid;
 
+      console.log("🌐 [HOSTING PLUGIN] Message received:", msg);
+
+      const isHostingQuery = hostingKeywords.some(keyword => msg.includes(keyword));
+      
+      if (!isHostingQuery) return;
+
+      try {
+        await conn.sendMessage(from, {
+          react: {
+            text: "🌐",
+            key: mek.key,
+          }
+        });
+      } catch (reactError) {}
+
+      // Send all 3 hosting images with contact button
       for (let i = 0; i < hostingImages.length; i++) {
-        await conn.sendMessage(key.remoteJid, {
+        const caption = i === 0 
+          ? "🌐 *HOSTING SERVICES*\n\nWe offer fast and reliable hosting for your websites and projects."
+          : null;
+
+        await sendInteractiveMessage(conn, from, {
           image: { url: hostingImages[i] },
-          caption: i === 0 
-            ? "🌐 *Hosting Services*\n\nWe offer fast and reliable hosting for your websites and projects.\n\n📞 Contact: wa.me/94722136082"
-            : null
+          title: i === 0 ? "🌐 HOSTING SERVICES" : null,
+          text: caption,
+          footer: "Need help? Contact support:",
+          interactiveButtons: [
+            {
+              name: 'cta_url',
+              buttonParamsJson: JSON.stringify({
+                display_text: '📞 Contact Support',
+                url: 'https://wa.me/94722136082'
+              })
+            }
+          ]
         }, { quoted: i === 0 ? mek : undefined });
       }
 
-      console.log("✅ [Hosting Plugin] Sent multiple hosting images");
+      console.log(`✅ [HOSTING PLUGIN] Sent 3 hosting images with contact button`);
+
     } catch (err) {
-      console.error("❌ [Hosting Plugin] Error:", err);
+      console.error("❌ [HOSTING PLUGIN] Error:", err);
     }
   }
 };
