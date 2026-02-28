@@ -102,156 +102,8 @@ const PLATFORM_KEYWORDS = {
     whatsapp: ['whatsapp', 'wa']
 };
 
-// Service triggers for detecting user intent
-const serviceTriggers = [
-    // Core service keywords
-    'price', 'cost', 'rate', 'service', 'buy', 'purchase', 'order',
-    
-    // Platform names
-    'instagram', 'ig', 'insta', 'facebook', 'fb', 'tiktok', 'tt', 'tik',
-    'youtube', 'yt', 'tube', 'whatsapp', 'wa',
-    
-    // Core service types
-    'follower', 'followers', 'fans', 'like', 'likes', 'heart', 'reaction', 'reactions',
-    'view', 'views', 'plays', 'watch', 'comment', 'comments', 'reply',
-    'share', 'shares', 'repost', 'save', 'saves', 'bookmark',
-    'story', 'stories', 'live', 'stream', 'subscriber', 'subscribers', 'subs',
-    'member', 'members', 'channel', 'watchtime', 'watch time', 'watch hours', 'hours',
-    'group', 'groups', 'poll', 'votes', 'video', 'videos', 'post', 'posts',
-    'page', 'pages', 'reel', 'reels', 'impression', 'impressions', 'reach', 'emoji',
-    
-    // PAGE-SPECIFIC TRIGGERS
-    // General page triggers
-    'page', 'pages', 'fan page', 'business page', 'official page',
-    
-    // Page follower triggers
-    'page followers', 'page follower', 'fan page followers',
-    'page fans', 'page fan', 'page audience',
-    
-    // Page like triggers
-    'page likes', 'page like', 'fan page likes',
-    'page reactions', 'page reaction',
-    
-    // Page view triggers
-    'page views', 'page view', 'page visits',
-    'page traffic', 'page visitors',
-    
-    // Page engagement triggers
-    'page engagement', 'page interactions',
-    'page comments', 'page comment',
-    'page shares', 'page share',
-    'page saves', 'page save',
-    
-    // Page reach triggers
-    'page reach', 'page impressions',
-    'page visibility', 'page exposure',
-    
-    // FACEBOOK PAGE SPECIFIC
-    'facebook page', 'fb page', 'meta page',
-    'facebook page likes', 'fb page likes',
-    'facebook page followers', 'fb page followers',
-    'facebook page fans', 'fb page fans',
-    
-    // INSTAGRAM PAGE/PROFILE SPECIFIC
-    'instagram page', 'ig page', 'insta page',
-    'instagram profile', 'ig profile',
-    'profile views', 'profile visits',
-    'profile followers', 'profile likes',
-    
-    // YOUTUBE PAGE/CHANNEL SPECIFIC
-    'youtube page', 'yt page',
-    'youtube channel', 'yt channel',
-    'channel views', 'channel visits',
-    'channel subscribers', 'channel subs',
-    
-    // TIKTOK PAGE/PROFILE SPECIFIC
-    'tiktok page', 'tt page',
-    'tiktok profile', 'tt profile',
-    'profile followers',
-    
-    // POST-SPECIFIC (different from page)
-    'post likes', 'post like',
-    'post comments', 'post comment',
-    'post shares', 'post share',
-    'post reactions', 'post reaction',
-    'post views', 'post view',
-    'post saves', 'post save',
-    'post impressions', 'post reach',
-    
-    // COMBINED PAGE + POST
-    'page and post', 'page & post',
-    'page likes + followers', 'page likes and followers',
-    'page engagement package',
-    
-    // ENHANCED WHATSAPP CHANNEL TRIGGERS
-    // Channel members variations
-    'channel members', 'channel member', 'members', 'subscribers',
-    
-    // Channel reactions variations
-    'channel reactions', 'channel reaction', 'post reactions', 'post reaction',
-    'emoji reactions', 'emoji reaction', 'emojis',
-    
-    // Specific emoji triggers
-    '👍', 'thumbs up', 'thumbsup',
-    '❤️', 'heart', 'love',
-    '😂', 'laugh', 'haha', 'laughing',
-    '😲', 'wow', 'surprised', 'shocked',
-    '😥', 'sad', 'cry', 'crying',
-    '🙏', 'pray', 'thankful', 'thanks',
-    '👏', 'clap', 'applause', 'clapping',
-    '🔥', 'fire', 'hot', 'trending',
-    '🏆', 'trophy', 'winner', 'champion',
-    '🎉', 'party', 'celebrate', 'celebration',
-    
-    // Mixed reactions
-    'mixed reactions', 'random reactions', 'mix emoji',
-    
-    // Channel posts
-    'channel posts', 'channel post', 'post emoji',
-    
-    // Channel targeting
-    'global channel', 'worldwide channel', 'targeted channel',
-    'country channel', 'specific channel',
-    
-    // Country-specific channel triggers
-    'india channel', 'indian channel',
-    'usa channel', 'us channel', 'america channel',
-    'arab channel', 'saudi channel',
-    'turkey channel', 'turkish channel',
-    'europe channel', 'european channel',
-    'brazil channel', 'brazilian channel',
-    'pakistan channel', 'pakistani channel',
-    'philippines channel', 'filipino channel',
-    'vietnam channel', 'vietnamese channel',
-    'thailand channel', 'thai channel',
-    'nigeria channel', 'nigerian channel',
-    'indonesia channel', 'indonesian channel',
-    
-    // Channel speed/quality
-    'fast channel', 'instant channel', 'quick channel',
-    'cheap channel', 'cheapest channel',
-    'slow channel', 'slow server',
-    
-    // Channel duration
-    'lifetime channel', 'permanent channel',
-    
-    // Comprehensive WhatsApp combinations
-    'whatsapp channel', 'wa channel',
-    'channel emoji', 'emoji channel',
-    'channel reactions', 'reactions channel',
-    'channel members', 'members channel',
-    
-    // Individual reaction types with context
-    'like reaction', 'heart reaction', 'love reaction',
-    'laugh reaction', 'haha reaction',
-    'wow reaction', 'surprised reaction',
-    'sad reaction', 'cry reaction',
-    'pray reaction', 'thank you reaction',
-    'clap reaction', 'applause reaction',
-    'fire reaction', 'hot reaction',
-    'trophy reaction', 'winner reaction',
-    'party reaction', 'celebrate reaction'
-];
+// All platform names for checking message start
+const PLATFORM_NAMES = ['tiktok', 'instagram', 'facebook', 'youtube', 'whatsapp', 'tt', 'ig', 'fb', 'yt', 'wa'];
 
 // Service keywords for matching
 const SERVICE_KEYWORDS = {
@@ -309,7 +161,7 @@ const SERVICE_KEYWORDS = {
     emojicomments: ['emoji comments'],
     customcomments: ['custom comments'],
     
-    // PAGE-SPECIFIC KEYWORDS (Facebook Pages, etc.)
+    // PAGE-SPECIFIC KEYWORDS
     pagefollowers: ['page followers', 'page follower', 'fan page followers'],
     pagelikes: ['page likes', 'page like', 'fan page likes'],
     pageviews: ['page views', 'page view', 'page visits'],
@@ -332,7 +184,7 @@ const SERVICE_KEYWORDS = {
     pagefans: ['page fans', 'fan page'],
     pagelikesplusfollowers: ['page likes + followers', 'page likes and followers'],
     
-    // POST-SPECIFIC (different from page)
+    // POST-SPECIFIC
     postlikes: ['post likes', 'post like'],
     postcomments: ['post comments', 'post comment'],
     postshares: ['post shares', 'post share'],
@@ -356,7 +208,7 @@ const SERVICE_KEYWORDS = {
     tiktokprofile: ['tiktok profile', 'tt profile'],
     profilefollowers: ['profile followers'],
     
-    // WHATSAPP CHANNEL (already had)
+    // WHATSAPP CHANNEL
     channelmembers: ['channel members', 'channel member', 'members', 'channel subscribers'],
     channelreactions: ['channel reactions', 'channel reaction', 'post reactions'],
     channelemojireactions: ['channel emoji reactions', 'channel emoji reaction'],
@@ -742,18 +594,46 @@ const CATEGORY_SERVICE_MAP = {
 };
 
 /**
- * Detect platform from query
+ * Detect platform from query - checks if message starts with platform name
  */
 function detectPlatform(query) {
     const normalized = normalize(query);
+    const firstWord = normalized.split(' ')[0];
+    
     for (const [platform, keywords] of Object.entries(PLATFORM_KEYWORDS)) {
         for (const keyword of keywords) {
-            if (normalized.includes(keyword)) {
+            if (firstWord === keyword || normalized.startsWith(keyword + ' ')) {
                 return platform;
             }
         }
     }
     return null;
+}
+
+/**
+ * Check if message is a service query (starts with platform name)
+ */
+function isServiceQuery(message) {
+    const normalized = normalize(message);
+    const firstWord = normalized.split(' ')[0];
+    
+    // Check if first word is a platform name
+    for (const [platform, keywords] of Object.entries(PLATFORM_KEYWORDS)) {
+        for (const keyword of keywords) {
+            if (firstWord === keyword) {
+                return true;
+            }
+        }
+    }
+    
+    // Also check if message starts with platform name
+    for (const platform of PLATFORM_NAMES) {
+        if (normalized.startsWith(platform + ' ')) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 /**
@@ -1201,9 +1081,13 @@ module.exports = {
             const from = key.remoteJid;
             const query = text.toLowerCase();
 
-            // Check if it's a service query
-            const isServiceQuery = serviceTriggers.some(t => query.includes(t));
-            if (!isServiceQuery) return;
+            // NEW: Check if message starts with a platform name (service query)
+            if (!isServiceQuery(query)) {
+                // Not a service query - do nothing
+                return;
+            }
+
+            console.log('📱 [AI PLUGIN] Service query detected:', query);
 
             await conn.sendPresenceUpdate('composing', from);
             try {
@@ -1229,7 +1113,7 @@ console.log('📱 Platform :', platform || '❌ Not detected');
 console.log('🎯 Service  :', service || '❌ Not detected');
 console.log('========================================\n');
 
-// NEW: Handle platform-only queries
+// Handle platform-only queries
 if (platform && !service) {
     // Filter all services for this platform
     let platformServices = services.filter(svc => {
