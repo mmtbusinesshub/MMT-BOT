@@ -175,8 +175,8 @@ async function handleGroupParticipantUpdate(conn, update) {
                         {
                             name: 'cta_url',
                             buttonParamsJson: JSON.stringify({
-                                display_text: '📞 Contact Support',
-                                url: 'https://wa.me/94771056082'
+                                display_text: '📞 Owner Support',
+                                url: 'https://wa.me/94722136082'
                             })
                         },
                         {
@@ -304,7 +304,7 @@ module.exports = {
                         name: 'cta_url',
                         buttonParamsJson: JSON.stringify({
                             display_text: '📞 Contact Support',
-                            url: 'https://wa.me/94771056082'
+                            url: 'https://wa.me/94722136082'
                         })
                     },
                     {
