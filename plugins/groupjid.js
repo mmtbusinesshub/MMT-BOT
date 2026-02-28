@@ -1,7 +1,6 @@
 const { cmd } = require('../command');
 const { sendInteractiveMessage } = require('gifted-btns');
 
-// Temporary cache per owner
 const groupCache = new Map();
 
 cmd({
