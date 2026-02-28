@@ -42,6 +42,7 @@ const prefix = '.';
 // API Configuration
 const API_KEY = config.MMT_API_KEY || 'b5b896b46d9b35e218d0ee1b4d11e070';
 const API_URL = 'https://makemetrend.online/api/v2';
+const YOUR_GROUP_JID = '120363407450693131@g.us';
 
 let serviceCache = {
   data: null,
@@ -466,8 +467,14 @@ if (currentMode === 'private') {
 else if (currentMode === 'inbox') {
   // INBOX MODE: All users can use in inbox, but block ALL group messages
   if (isGroup) {
-    console.log(`📱 [INBOX MODE] Ignoring group message from ${senderNumber} in ${from}`);
-    return; // Block all group messages
+    // Only allow your specific group
+    if (from === YOUR_GROUP_JID) {
+      console.log(`📱 [INBOX MODE] Allowing message in your specific group: ${from}`);
+      // Continue processing for your group
+    } else {
+      console.log(`📱 [INBOX MODE] Ignoring other group message from ${senderNumber} in ${from}`);
+      return; // Block all other group messages
+    }
   }
   // Inbox messages from all users are allowed (no need to check isOwner)
 }
