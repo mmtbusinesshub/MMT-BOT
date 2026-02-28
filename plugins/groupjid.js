@@ -4,29 +4,9 @@ const { sendInteractiveMessage } = require('gifted-btns');
 // Temporary cache per owner session
 const groupCache = new Map();
 
-// Helper to extract body from interactive response
-function extractBody(mek, m) {
-    const type = Object.keys(mek.message || {})[0];
-    return (type === 'conversation') ? mek.message.conversation :
-           (type === 'extendedTextMessage') ? mek.message.extendedTextMessage.text :
-           (type === 'templateButtonReplyMessage') ? mek.message.templateButtonReplyMessage?.selectedId :
-           (type === 'interactiveResponseMessage') ? (() => {
-              try {
-                  const json = JSON.parse(
-                      mek.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson
-                  );
-                  return json?.id || '';
-              } catch { return ''; }
-           })() :
-           (type === 'imageMessage') ? mek.message.imageMessage?.caption :
-           (type === 'videoMessage') ? mek.message.videoMessage?.caption :
-           m.msg?.text ||
-           m.msg?.conversation ||
-           m.msg?.caption ||
-           m.msg?.selectedButtonId ||
-           m.msg?.singleSelectReply?.selectedRowId ||
-           '';
-}
+const channelJid = '120363423526129509@newsletter';
+const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡';
+const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
 
 /* =======================================================
    🔥 MAIN COMMAND
@@ -47,7 +27,6 @@ async (sock, mek, m, {
 }) => {
 
     try {
-
         // 🔒 Owner check
         if (!isOwner) {
             return reply("❌ This command is only for bot owners.");
@@ -64,7 +43,7 @@ async (sock, mek, m, {
             return reply("❌ Bot is not participating in any groups.");
         }
 
-        // ✅ Store using sender
+        // Store groups in cache
         groupCache.set(sender, groups);
 
         let rows = [];
@@ -77,8 +56,11 @@ async (sock, mek, m, {
             });
         }
 
+        // Send the interactive menu
         await sendInteractiveMessage(sock, from, {
-            text: "📌 *Select a group to get its JID*",
+            image: { url: serviceLogo },
+            title: "👥 GROUP JID FINDER",
+            text: "📌 *Select a group to get its JID*\n\nChoose from the menu below:",
             footer: "MMT Business Hub • Owner Panel",
             interactiveButtons: [
                 {
@@ -96,40 +78,60 @@ async (sock, mek, m, {
             ]
         }, { quoted: mek });
 
-        // Handle the response immediately after sending
-        const body = extractBody(mek, m);
-        
-        // Check if this is a response to our selection
-        if (body && body.startsWith("selectjid_")) {
-            const groupJid = body.replace("selectjid_", "");
-            
-            // Get groups from cache
-            const cachedGroups = groupCache.get(sender);
-            if (!cachedGroups) {
-                return reply("❌ Session expired. Please run .groupjid again.");
-            }
-
-            const group = cachedGroups[groupJid];
-            if (!group) return;
-
-            // Send the JID with copy button
-            await sendInteractiveMessage(sock, from, {
-                text: `📌 *${group.subject}*\n\nBelow is the Group JID:`,
-                footer: "Tap copy button below",
-                interactiveButtons: [
-                    {
-                        name: "cta_copy",
-                        buttonParamsJson: JSON.stringify({
-                            display_text: "📋 Copy Group JID",
-                            copy_code: groupJid
-                        })
-                    }
-                ]
-            }, { quoted: mek });
-        }
-
     } catch (err) {
         console.log("GroupJID Command Error:", err);
         reply(`❌ Error: ${err.message}`);
     }
 });
+
+/* =======================================================
+   🔥 BUTTON RESPONSE HANDLER
+======================================================= */
+
+module.exports.onButtonResponse = async (conn, msg, selectedId, from) => {
+    try {
+        console.log("🔘 [GROUPJID] Button clicked:", selectedId);
+
+        // Check if this is a group selection
+        if (!selectedId || !selectedId.startsWith("selectjid_")) return;
+
+        const groupJid = selectedId.replace("selectjid_", "");
+        
+        // Get sender from the message
+        const sender = msg.key.participant || msg.key.remoteJid;
+        
+        // Get groups from cache
+        const groups = groupCache.get(sender);
+        if (!groups) {
+            await conn.sendMessage(from, {
+                text: "❌ Session expired. Please run .groupjid again."
+            });
+            return;
+        }
+
+        const group = groups[groupJid];
+        if (!group) return;
+
+        // Send the JID with copy button
+        await sendInteractiveMessage(conn, from, {
+            image: { url: serviceLogo },
+            title: "📋 GROUP JID",
+            text: `📌 *${group.subject}*\n\nBelow is the Group JID:`,
+            footer: "Tap copy button below",
+            interactiveButtons: [
+                {
+                    name: "cta_copy",
+                    buttonParamsJson: JSON.stringify({
+                        display_text: "📋 Copy Group JID",
+                        copy_code: groupJid
+                    })
+                }
+            ]
+        });
+
+        console.log(`✅ [GROUPJID] Sent JID for group: ${group.subject}`);
+
+    } catch (err) {
+        console.error("❌ [GROUPJID] Button response error:", err);
+    }
+};
