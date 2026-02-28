@@ -119,24 +119,13 @@ async function handleGroupParticipantUpdate(conn, update) {
                 const greeting = getTimeGreeting();
                 const mentionName = participantJid.split('@')[0];
                 
-                // Simple test message first
-                const testMessage = `👋 Welcome to the group, @${mentionName}!`;
-                
-                console.log(`📤 Sending welcome to ${participantJid}`);
-                
-                // Send with proper mentions format
-                await conn.sendMessage(id, {
-                    text: testMessage,
-                    mentions: [participantJid]
-                });
-                
-                // If test works, then send full message
-                const fullMessage = `
-╭━〔 🎉 *WELCOME TO MMT* 〕━╮
+                // Full welcome message with image and buttons
+                const welcomeCaption = `
+╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
 ┃━━━━━━━━━━━━━━━━━━━━━
-┃ ${greeting}, *${userName}!*
+┃ ${greeting}, @${mentionName}! 
 ┃
-┃ 👋 *Thanks for messaging us!*
+┃ 👋 *Welcome to MMT Business Hub!*
 ┃ 🤖 *I'm your AI Business Assistant*
 ┃━━━━━━━━━━━━━━━━━━━━━━━
 ┃ 📌 *WHAT YOU CAN GET HERE:*
@@ -163,17 +152,53 @@ async function handleGroupParticipantUpdate(conn, update) {
 
 💫 *We're here to help grow your business!*`;
 
-                await conn.sendMessage(id, {
-                    text: fullMessage,
-                    mentions: [participantJid]
-                });
+                // Send welcome with image and buttons
+                await sendInteractiveMessage(conn, id, {
+                    image: { url: serviceLogo },
+                    title: "🎉 WELCOME TO MMT BUSINESS HUB",
+                    text: welcomeCaption,
+                    footer: "Choose an option below:",
+                    interactiveButtons: [
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '🌐 Visit Website',
+                                url: 'https://makemetrend.online'
+                            })
+                        },
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '📞 Contact Support',
+                                url: 'https://wa.me/94771056082'
+                            })
+                        },
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '👥 Join Our Group',
+                                url: 'https://chat.whatsapp.com/FSyiJnvAyaLH6wyDuW6aYy'
+                            })
+                        },
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '📢 Follow Our Channel',
+                                url: 'https://whatsapp.com/channel/0029Vb6MCIz3LdQMnBdE7B0N'
+                            })
+                        }
+                    ]
+                }, { mentions: [participantJid] }); // Add mentions to tag the new member
                 
                 markWelcomed(participantJid);
-                console.log(`✅ [WELCOME PLUGIN] Sent welcome to ${participantJid}`);
+                console.log(`✅ [WELCOME PLUGIN] Sent full welcome with image to ${participantJid}`);
                 
             } catch (err) {
                 console.error(`❌ Error sending to participant:`, err);
             }
+            
+            // Small delay between messages if multiple members join at once
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
     } catch (err) {
         console.error("❌ [WELCOME PLUGIN] Error in group participant update:", err);
