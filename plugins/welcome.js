@@ -95,7 +95,7 @@ module.exports = {
 ┃ 📌 *WHAT YOU CAN GET HERE:*
 ┃
 ┃ 💳 *BANK DETAILS*
-┃ • Type *bank* to see all payment methods
+┃ • Type *bank details* to see all payment methods
 ┃ • HNB, BOC, EZ Cash, Binance Pay
 ┃
 ┃ 🚀 *SERVICE DETAILS*
@@ -106,17 +106,12 @@ module.exports = {
 ┃ • Type *whatsapp channel*
 ┃
 ┃ 👑 *ADMIN DETAILS*
-┃ • Type *admin* for contact info
+┃ • Type *admin details* for contact info
 ┃ • Support team ready to help
 ┃
 ┃ 🌐 *HOSTING DETAILS*
 ┃ • Type *hosting* to see our plans
 ┃ • Fast & reliable web hosting
-┃━━━━━━━━━━━━━━━━━━━━━━━
-┃ 💡 *TIPS:*
-┃ • Be specific with your requests
-┃ • Example: "tiktok followers 1000"
-┃ • Use .services to see all options
 ╰━━━━━━━━━━━━━━━━━━━━━━━╯
 
 💫 *We're here to help grow your business!*`;
@@ -142,20 +137,21 @@ module.exports = {
                             url: 'https://wa.me/94771056082'
                         })
                     },
+
                     {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: '💰 Bank Details',
-                            id: 'bank_quick'
-                        })
-                    },
-                    {
-                        name: 'quick_reply',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: '🚀 Services',
-                            id: 'services_quick'
-                        })
-                    }
+    name: 'cta_url',
+    buttonParamsJson: JSON.stringify({
+        display_text: '👥 Join Our Group',
+        url: 'https://chat.whatsapp.com/FSyiJnvAyaLH6wyDuW6aYy?mode=gi_t'
+    })
+},
+{
+    name: 'cta_url',
+    buttonParamsJson: JSON.stringify({
+        display_text: '📢 Follow Our Channel',
+        url: 'https://whatsapp.com/channel/0029Vb6MCIz3LdQMnBdE7B0N'
+    })
+}
                 ]
             }, { quoted: mek });
             
