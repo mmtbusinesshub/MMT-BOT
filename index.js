@@ -249,6 +249,59 @@ async function connectToWA() {
           require("./plugins/" + plugin);
         }
       });
+
+      conn.ev.on('messages.upsert', async ({ messages }) => {
+  for (const msg of messages) {
+    if (!msg.message) continue;
+    
+    const key = msg.key;
+    const from = key.remoteJid;
+    
+    // Check for button responses
+    const buttonResponse = 
+      msg.message.buttonsResponseMessage ||
+      msg.message.interactiveResponseMessage ||
+      msg.message.templateButtonReplyMessage;
+    
+    if (buttonResponse) {
+      let selectedId = '';
+      let selectedDisplayText = '';
+      
+      // Extract selected button ID based on message type
+      if (msg.message.buttonsResponseMessage) {
+        selectedId = msg.message.buttonsResponseMessage.selectedButtonId;
+        selectedDisplayText = msg.message.buttonsResponseMessage.selectedDisplayText;
+      } else if (msg.message.templateButtonReplyMessage) {
+        selectedId = msg.message.templateButtonReplyMessage.selectedId;
+        selectedDisplayText = msg.message.templateButtonReplyMessage.selectedDisplayText;
+      } else if (msg.message.interactiveResponseMessage) {
+        const responseMsg = msg.message.interactiveResponseMessage;
+        if (responseMsg.nativeFlowResponseMessage?.paramsJson) {
+          try {
+            const parsed = JSON.parse(responseMsg.nativeFlowResponseMessage.paramsJson);
+            selectedId = parsed.id || '';
+            selectedDisplayText = parsed.display_text || '';
+          } catch {}
+        }
+      }
+      
+      console.log("🔘 [MMT BUSINESS HUB] Button clicked:", { selectedId, selectedDisplayText, from });
+      
+      // Check all plugins for button response handlers
+      if (global.pluginHooks) {
+        for (const plugin of global.pluginHooks) {
+          if (plugin.onButtonResponse) {
+            try {
+              await plugin.onButtonResponse(conn, msg, selectedId, from);
+            } catch (e) {
+              console.log("[MMT BUSINESS HUB] onButtonResponse error:", e);
+            }
+          }
+        }
+      }
+    }
+  }
+});
       console.log("✅ [MMT BUSINESS HUB] Plugins installed successfully.");
       console.log("📶 [MMT BUSINESS HUB] Successfully connected to WhatsApp!");
 
