@@ -19,6 +19,15 @@ module.exports = {
 
       if (!text.toLowerCase().includes("admin details")) return;
 
+        try {
+        await conn.sendMessage(key.remoteJid, {
+          react: {
+            text: "⭕",
+            key: mek.key,
+          }
+        });
+      } catch (reactError) {}
+
       // Send image with caption and contact button using gifted-btns
       await sendButtons(conn, key.remoteJid, {
         image: { url: adminImage },
