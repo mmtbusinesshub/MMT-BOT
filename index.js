@@ -204,6 +204,8 @@ const hostingPlugin = require('./plugins/hosting.js');
 global.pluginHooks.push(hostingPlugin);
 const adminDetails = require('./plugins/admin_details.js');
 global.pluginHooks.push(adminDetails);
+const welcomePlugin = require('./plugins/welcome.js');
+global.pluginHooks.push(welcomePlugin);
 
 async function connectToWA() {
   console.log("🛰️ [MMT BUSINESS HUB] Initializing WhatsApp connection...");
