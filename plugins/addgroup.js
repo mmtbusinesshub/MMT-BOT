@@ -231,13 +231,18 @@ module.exports.onButtonResponse = async (conn, msg, selectedId, from) => {
             });
         }
 
-        // Send result message
-        await sendInteractiveMessage(conn, from, {
-            image: { url: serviceLogo },
-            title: success.length > 0 ? "✅ ADD COMPLETE" : "❌ ADD FAILED",
+        // FIX: Send as regular image message instead of interactive message (since no buttons)
+        await conn.sendMessage(from, {
             text: resultMessage,
-            footer: "MMT Business Hub • Owner Panel",
-            interactiveButtons: [] // No buttons
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: channelJid,
+                    newsletterName: channelName,
+                    serverMessageId: -1
+                }
+            }
         });
 
         console.log(`✅ [GROUPADD] Completed: ${success.length} success, ${failed.length} failed`);
