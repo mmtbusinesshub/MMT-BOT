@@ -120,7 +120,7 @@ async function handleGroupParticipantUpdate(conn, update) {
                 
                 // Send a separate mention message first
                 await conn.sendMessage(id, {
-                    text: `${greeting}, ${mentionText}! 👋 Welcome to MMT Business Hub!`,
+                    text: `${greeting}, ${mentionText}! 👋`,
                     mentions: [participantJid]
                 });
                 
@@ -129,7 +129,7 @@ async function handleGroupParticipantUpdate(conn, update) {
                 
                 // Full welcome message with image and buttons (without mention in caption)
                 const welcomeCaption = 
-`╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
+`╭━〔 🎉 *WELCOME TO THE GROUP* 〕
 ┃━━━━━━━━━━━━━━━━━━━━━
 ┃ 👋 *Welcome to MMT Business Hub!*
 ┃ 🤖 *I'm your AI Business Assistant*
