@@ -7,8 +7,8 @@ const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃�
 const serviceLogo = "https://github.com/mmtbusinesshub/MMT-BOT/blob/main/images/download.png?raw=true";
 
 // Your specific group and channel JIDs
-const YOUR_GROUP_JID = '120363407450693131@g.us'; // REPLACE WITH YOUR ACTUAL GROUP JID
-const YOUR_CHANNEL_JID = '120363427927272922@newsletter'; // Your channel JID
+const YOUR_GROUP_JID = '120363407450693131@g.us';
+const YOUR_CHANNEL_JID = '120363427927272922@newsletter';
 
 const WELCOME_DATA_FILE = path.join(__dirname, '../welcome_data.json');
 
@@ -54,9 +54,14 @@ function markWelcomed(userJid) {
     saveWelcomeData();
 }
 
-// Function to get time-based greeting
+// Function to get time-based greeting with Colombo timezone (GMT+5:30)
 function getTimeGreeting() {
-    const hour = new Date().getHours();
+    // Create date object with Colombo timezone
+    const options = { timeZone: 'Asia/Colombo', hour: 'numeric', hour12: false };
+    const colomboTime = new Date().toLocaleString('en-US', options);
+    const hour = parseInt(colomboTime);
+    
+    console.log(`🕐 [WELCOME PLUGIN] Colombo hour: ${hour}`);
     
     if (hour >= 5 && hour < 12) {
         return "🌅 Good Morning";
@@ -79,11 +84,13 @@ async function handleGroupParticipantUpdate(conn, update) {
     try {
         const { id, participants, action } = update;
         
-        // Only process for your specific group
+        // Only process for your specific group (bypasses inbox mode)
         if (id !== YOUR_GROUP_JID) return;
         
         // Only process when users are added
         if (action !== 'add') return;
+        
+        console.log(`👥 [WELCOME PLUGIN] New member added to your group: ${participants.join(', ')}`);
         
         for (const participantJid of participants) {
             // Check if user needs welcome (30-day reset)
@@ -139,7 +146,7 @@ async function handleGroupParticipantUpdate(conn, update) {
             
             // Mark as welcomed
             markWelcomed(participantJid);
-            console.log(`✅ [WELCOME PLUGIN] Sent group welcome to ${participantJid}`);
+            console.log(`✅ [WELCOME PLUGIN] Sent group welcome to ${participantJid} at Colombo hour ${hour}`);
         }
     } catch (err) {
         console.error("❌ [WELCOME PLUGIN] Error in group participant update:", err);
@@ -151,7 +158,7 @@ async function handleChannelUpdate(conn, update) {
     try {
         // This would need to be implemented based on how channel follows are detected
         // WhatsApp doesn't provide direct event for channel follows yet
-        console.log("📢 [WELCOME PLUGIN] Channel update detected");
+        console.log("📢 [WELCOME PLUGIN] Channel update detected for", YOUR_CHANNEL_JID);
     } catch (err) {
         console.error("❌ [WELCOME PLUGIN] Error in channel update:", err);
     }
@@ -168,13 +175,13 @@ module.exports = {
             const from = key.remoteJid;
             const sender = key.participant || from;
             
-            // Handle group messages differently
+            // Handle group messages - ONLY for your specific group
             if (from.endsWith('@g.us')) {
-                // For groups, only process if it's your specific group
+                // Only process if it's your specific group
                 if (from !== YOUR_GROUP_JID) return;
                 
-                // Check if this is a new user joining (this will be handled by group-participants.update event)
-                // So we don't process here
+                // Check if this is a text message that might need processing
+                // But group welcomes are handled by onGroupParticipantUpdate
                 return;
             }
             
