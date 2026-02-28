@@ -117,13 +117,13 @@ async function handleGroupParticipantUpdate(conn, update) {
                 } catch {}
                 
                 const greeting = getTimeGreeting();
-                const mentionName = participantJid.split('@')[0];
+                const mentionText = `@${participantJid.split('@')[0]}`;
                 
                 // Full welcome message with image and buttons
-                const welcomeCaption = `
-╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
+                const welcomeCaption = 
+`╭━〔 🎉 *WELCOME TO THE GROUP* 〕━╮
 ┃━━━━━━━━━━━━━━━━━━━━━
-┃ ${greeting}, @${mentionName}! 
+┃ ${greeting}, ${mentionText}! 
 ┃
 ┃ 👋 *Welcome to MMT Business Hub!*
 ┃ 🤖 *I'm your AI Business Assistant*
