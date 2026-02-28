@@ -1282,7 +1282,7 @@ if (platform && !service) {
         });
 
         messageText += `💡 *Tip:* Be more specific! Try "${platform} likes" or "${platform} followers"\n\n`;
-        messageText += `📞 *Support:* wa.me/94722136082\n`;
+        messageText += `📞 *Support:* wa.me/94771056082\n`;
         messageText += `🌐 *Website:* https://makemetrend.online\n`;
         messageText += `╰━━━━━━━━━━━━━━━━━━━━━━╯`;
 
@@ -1327,7 +1327,7 @@ if (!platform || !service) {
     helpText += "• facebook page likes\n";
     helpText += "• youtube subscribers\n";
     helpText += "• whatsapp channel\n\n";
-    helpText += "📞 *Support:* wa.me/94722136082\n";
+    helpText += "📞 *Support:* wa.me/94771056082\n";
     helpText += "🌐 *Website:* https://makemetrend.online\n";
     helpText += "╰━━━━━━━━━━━━━━━━━━━━━━━━╯";
     
@@ -1406,7 +1406,7 @@ if (!platform || !service) {
             });
 
             messageText += `💡 *Showing:* 3 cheapest + 2 most expensive ${platform} ${service} services\n\n`;
-            messageText += `📞 *Support:* wa.me/94722136082\n`;
+            messageText += `📞 *Support:* wa.me/94771056082\n`;
             messageText += `🌐 *Website:* https://makemetrend.online\n`;
             messageText += `╰━━━━━━━━━━━━━━━━━━━━━━╯`;
 
