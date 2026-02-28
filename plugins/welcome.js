@@ -303,7 +303,7 @@ module.exports = {
                     {
                         name: 'cta_url',
                         buttonParamsJson: JSON.stringify({
-                            display_text: '📞 Contact Support',
+                            display_text: '📞 Owner Support',
                             url: 'https://wa.me/94722136082'
                         })
                     },
