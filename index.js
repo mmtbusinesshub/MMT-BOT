@@ -338,6 +338,19 @@ async function connectToWA() {
 
   conn.ev.on('creds.update', saveCreds);
 
+  // Add this in your index.js where you handle events
+conn.ev.on('group-participants.update', async (update) => {
+    for (const plugin of global.pluginHooks) {
+        if (plugin.onGroupParticipantUpdate) {
+            try {
+                await plugin.onGroupParticipantUpdate(conn, update);
+            } catch (e) {
+                console.log("[MMT BUSINESS HUB] onGroupParticipantUpdate error:", e);
+            }
+        }
+    }
+});
+
   conn.ev.on('messages.upsert', async (mek) => {
     mek = mek.messages[0];
     if (!mek.message) return;
