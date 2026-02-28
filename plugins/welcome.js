@@ -1,6 +1,7 @@
 // plugins/welcome.js
 const fs = require('fs');
 const path = require('path');
+const { sendInteractiveMessage } = require('gifted-btns');
 
 const channelJid = '120363423526129509@newsletter';
 const channelName = 'ミ★ 𝙈𝙈𝙏 𝘽𝙐𝙎𝙄𝙉𝙀𝙎𝙎 𝙃𝙐𝘽 ★彡';
@@ -84,16 +85,13 @@ module.exports = {
             // Small delay to make it feel natural
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // Welcome message with all features
-            const welcomeCaption = `╭━━〔 🎉 *WELCOME TO MMT BUSINESS HUB* 〕━━╮
-┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-┃
+            // Welcome message with all features (removed text links since we'll use buttons)
+            const welcomeCaption = `
+╭━〔 🎉 *WELCOME TO MMT* 〕━╮
+┃━━━━━━━━━━━━━━━━━━━━━
 ┃ 👋 *Hello! Thanks for messaging us!*
-┃
 ┃ 🤖 *I'm your AI Business Assistant*
-┃
-┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-┃
+┃━━━━━━━━━━━━━━━━━━━━━━━
 ┃ 📌 *WHAT YOU CAN GET HERE:*
 ┃
 ┃ 💳 *BANK DETAILS*
@@ -114,42 +112,57 @@ module.exports = {
 ┃ 🌐 *HOSTING DETAILS*
 ┃ • Type *hosting* to see our plans
 ┃ • Fast & reliable web hosting
-┃
-┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-┃
+┃━━━━━━━━━━━━━━━━━━━━━━━
 ┃ 💡 *TIPS:*
 ┃ • Be specific with your requests
 ┃ • Example: "tiktok followers 1000"
 ┃ • Use .services to see all options
-┃
-┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-┃
-┃ 📞 *Support:* wa.me/94771056082
-┃ 🌐 *Website:* https://makemetrend.online
-┃
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+╰━━━━━━━━━━━━━━━━━━━━━━━╯
 
 💫 *We're here to help grow your business!*`;
 
-            // Send welcome message with logo
-            await conn.sendMessage(from, {
+            // Send welcome message with logo AND buttons
+            await sendInteractiveMessage(conn, from, {
                 image: { url: serviceLogo },
-                caption: welcomeCaption,
-                contextInfo: {
-                    forwardingScore: 999,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: channelJid,
-                        newsletterName: channelName,
-                        serverMessageId: -1
+                title: "🎉 WELCOME TO MMT BUSINESS HUB",
+                text: welcomeCaption,
+                footer: "Choose an option below:",
+                interactiveButtons: [
+                    {
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '🌐 Visit Website',
+                            url: 'https://makemetrend.online'
+                        })
+                    },
+                    {
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '📞 Contact Support',
+                            url: 'https://wa.me/94771056082'
+                        })
+                    },
+                    {
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '💰 Bank Details',
+                            id: 'bank_quick'
+                        })
+                    },
+                    {
+                        name: 'quick_reply',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '🚀 Services',
+                            id: 'services_quick'
+                        })
                     }
-                }
-            });
+                ]
+            }, { quoted: mek });
             
             // Mark user as welcomed
             markWelcomed(sender);
             
-            console.log(`✅ [WELCOME PLUGIN] Welcome sent to ${sender}`);
+            console.log(`✅ [WELCOME PLUGIN] Welcome sent to ${sender} with buttons`);
             
         } catch (err) {
             console.error("❌ [WELCOME PLUGIN] Error:", err);
