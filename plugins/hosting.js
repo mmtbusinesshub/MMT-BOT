@@ -47,14 +47,21 @@ module.exports = {
 
       // Send all 3 hosting images with contact button
       for (let i = 0; i < hostingImages.length; i++) {
-        const caption = i === 0 
-          ? "🌐 *HOSTING SERVICES*\n\nWe offer fast and reliable hosting for your websites and projects."
-          : null;
+        // Prepare caption text based on image position
+        let captionText = "";
+        let title = "";
+        
+        if (i === 0) {
+          captionText = "🌐 *HOSTING SERVICES*\n\nWe offer fast and reliable hosting for your websites and projects.";
+          title = "🌐 HOSTING SERVICES";
+        } else {
+          captionText = `📸 *Hosting Preview ${i+1} of ${hostingImages.length}*`;
+        }
 
         await sendInteractiveMessage(conn, from, {
           image: { url: hostingImages[i] },
-          title: i === 0 ? "🌐 HOSTING SERVICES" : null,
-          text: caption,
+          title: title,
+          text: captionText,  // text is now always provided
           footer: "Need help? Contact support:",
           interactiveButtons: [
             {
@@ -68,7 +75,7 @@ module.exports = {
         }, { quoted: i === 0 ? mek : undefined });
       }
 
-      console.log(`✅ [HOSTING PLUGIN] Sent 3 hosting images with contact button`);
+      console.log(`✅ [HOSTING PLUGIN] Sent ${hostingImages.length} hosting images with contact button`);
 
     } catch (err) {
       console.error("❌ [HOSTING PLUGIN] Error:", err);
