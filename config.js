@@ -15,7 +15,7 @@ const defaultConfig = {
   AUTO_STATUS_REPLY: "false",
   AUTO_STATUS_SEEN: "false",
   MODE: "inbox", // 'private', 'public'
-  MMT_API_KEY: "529e5c3a2253bf93a5d9c2e104a3b498",
+  MMT_API_KEY: "3c9ec616022316416f38f1675c03fc3f",
   ALLOWED_GROUPS: ["120363419871186359@g.us"], // Add your allowed group JIDs here
 };
 
